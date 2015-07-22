@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- shared -->
+    <string name="nsa_delete_pd_message">sending request…</string>
+    <string name="nsa_loading">loading</string>
+    <string name="nsa_friends">Friends</string>
+    <string name="nsa_mails">Mails</string>
+    <string name="nsa_edit">Edit</string>
+    <string name="nsa_save">Save</string>
+    <string name="nsa_delete">Delete</string>
+    <string name="nsa_done">Done</string>
+    <!-- app names -->
+    <string name="nsa_friend">Friends</string>
+    <string name="nsa_chat">Chat</string>
+    <string name="nsa_photo">Photo</string>
+    <string name="nsa_mail">Mail</string>
+    <!--  -->
+
+
+    <!-- friend -->
+    <string name="nsa_add_a_friend">Add a Friend</string>
+    <string name="nsa_friend_already_added">You are already friends</string>
+    <string name="nsa_friend_request_sent">Friend request sent</string>
+    <string name="nsa_friend_request_already_sent">Friend request already sent</string>
+    <string name="nsa_friend_invalid_friend_code">Friend code invalid</string>
+    <!-- chat -->
+    <string name="nsa_chat_empty_history">No chat history with this user</string>
+    <string name="nsa_chat_all_history_loaded">no more history messages</string>
+    <!-- mail -->
+    <string name="nsa_mail_inbox">Inbox</string>
+    <string name="nsa_mail_outbox">Sent</string>
+    <string name="nsa_mail_empty_box">mailbox is empty</string>
+    <!-- photo -->
+    <string name="nsa_photos">Photos</string>
+    <string name="nsa_chat_all_photo_loaded">no more photos</string>
+    <!--  -->
+    <string name="nsa_friend_list">FRIEND LIST</string>
+    <string name="nsa_inbox">INBOX</string>
+    <string name="nsa_sent_mail">SENT MAIL</string>
+    <string name="nsa_app_name">NSA</string>
+    <string name="default_text">default text</string>
+    <string name="empty" translatable="false"></string>
+    <string name="roboto_bold" translatable="false">fonts/Roboto-Bold.ttf</string>
+    <string name="roboto_light" translatable="false">fonts/Roboto-Light.ttf</string>
+    <string name="roboto_medium" translatable="false">fonts/Roboto-Medium.ttf</string>
+    <string name="roboto_regular" translatable="false">fonts/Roboto-Regular.ttf</string>
+
+</resources>

@@ -1,0 +1,50 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".Activity_xmind">
+
+    <LinearLayout
+        android:id="@+id/ll_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_pipeline_controller"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:text="Service switch" />
+
+        <TextView
+            android:id="@+id/tv_pipeline_status"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:textSize="30sp" />
+
+        <Button
+            android:id="@+id/btn_clear_DB"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:text="Delete all data" />
+
+        <ImageView
+            android:id="@+id/iv_iv_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="fitCenter"
+            android:visibility="visible" />
+
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/timelimits_main_listview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/ll_container"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"></ListView>
+
+
+</RelativeLayout>

@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">xmind_funf</string>
+    <string name="default_pipeline">
+        {"@type":"edu.mit.media.funf.pipeline.BasicPipeline",
+        "name":"default",
+        "version":1,
+        "data":[
+        "edu.mit.media.funf.probe.builtin.WifiProbe",
+        "edu.mit.media.funf.probe.builtin.BatteryProbe",
+        "edu.mit.media.funf.probe.builtin.BluetoothProbe",
+        "edu.mit.media.funf.probe.builtin.LocationProbe",
+        "edu.mit.media.funf.probe.builtin.RunningApplicationsProbe",
+        "edu.mit.media.funf.probe.builtin.ScreenProbe",
+        "edu.mit.media.funf.probe.builtin.ServicesProbe",
+        "edu.mit.media.funf.probe.builtin.TemperatureSensorProbe",
+        "edu.mit.media.funf.probe.builtin.HardwareInfoProbe"
+        ]
+        }
+    </string>
+
+</resources>

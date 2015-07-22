@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- general -->
+    <color name="nsa_light_red">#EB2023</color>
+    <color name="nsa_dark_red">#BA171B</color>
+
+    <!-- listview item background -->
+    <color name="nsa_list_light_grey">#EDE6E2</color>
+    <color name="nsa_list_dark_grey">#CCCCCC</color>
+
+    <!-- chatroom -->
+    <color name="nsa_chat_text">#656565</color>
+
+    <!-- mail -->
+    <color name="nsa_mail_tab_dark_bg">#A5A5A5</color>
+    <color name="nsa_mail_text_dark_grey">#656565</color>
+
+    <!-- photo -->
+    <color name="nsa_text_light_blue">#499DD7</color>
+    <color name="nsa_text_light_grey">#999999</color>
+    
+    <!-- Top bar -->
+    <color name="nsa_top_bar_red">#ED2124</color>
+    <color name="nsa_top_bar_grey">#5F000000</color>
+    
+    <color name="nsa_list_line_grey">#A7A9AC</color>
+    <color name="nsa_grey_939598">#939598</color>
+    <color name="nsa_grey_6D6E71">#6D6E71</color>
+
+</resources>
