@@ -151,7 +151,7 @@ public class Activity_xmind extends Activity {
             } else {
                 holder = (ViewHolder) convertView.getTag();
             }
-
+            //set data
             final String probeName = po.get(position).getProbeName();
             final String value = po.get(position).getValue();
             final String timestamp = po.get(position).getTimestamp();
