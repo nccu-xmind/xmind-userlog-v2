@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.FileObserver;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
@@ -16,6 +17,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import edu.mit.media.funf.FunfManager;
@@ -65,19 +68,22 @@ public class xmind_service extends Service implements Probe.DataListener {
     private Context mContext;
 
     private boolean isAlreadyRunning = true;
+    private boolean isNewPictureByReceiver = false;
 
     private AlarmManager alarmManager;
     private PendingIntent pendingIntent;
 
     private NameValueDatabaseHelper mNameValueDatabaseHelper;
 
-    private FileObserver observer = null;
+    //    private FileObserver observer = null;
+    private ArrayList<FileObserver> al_fo = new ArrayList<>();
+    private final Handler handler = new Handler();
+
 
     @Override
     public void onCreate() {
         super.onCreate();
-        isAlreadyRunning = false;
-        Log.v(TAG, "First time running this service...");
+        isAlreadyRunning = false;//set it false if first time running this app.
     }
 
     //STOP - service and unregister listener
@@ -94,9 +100,9 @@ public class xmind_service extends Service implements Probe.DataListener {
             locationProbe.unregisterListener(xmind_service.this);
             runningApplicationsProbe.unregisterListener(runningAppListener);
             screenProbe.unregisterListener(xmind_service.this);
-            if(servicesProbe != null)
+            if (servicesProbe != null)
                 servicesProbe.unregisterListener(xmind_service.this);
-            if(batteryProbe != null)
+            if (batteryProbe != null)
                 batteryProbe.unregisterListener(xmind_service.this);
             temperatureSensorProbe.unregisterListener(xmind_service.this);
 
@@ -105,16 +111,19 @@ public class xmind_service extends Service implements Probe.DataListener {
             alarmManager.cancel(pendingIntent);//Cancel timer
             unbindService(funfManagerConn);
         }
-        if(observer != null){
-            observer.stopWatching();
+
+        if (al_fo.size() > 0) {//Stop watching folder if service destroyed.
+            for (int i = 0; i < al_fo.size(); i++) {
+                al_fo.get(i).stopWatching();
+            }
         }
     }
 
-    private String getType(String targetType){
+    private String getType(String targetType) {
         String result = "";
-        if(targetType != null && !targetType.equals("")){
+        if (targetType != null && !targetType.equals("")) {
             result = targetType.substring(targetType.lastIndexOf(".") + 1);
-            result = result.substring(0, result.length()-1);//Remove last character --> "
+            result = result.substring(0, result.length() - 1);//Remove last character --> "
         }
         return result;
     }
@@ -135,7 +144,7 @@ public class xmind_service extends Service implements Probe.DataListener {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         mContext = this;
-        if(intent != null && intent.getAction() != null){
+        if (intent != null && intent.getAction() != null) {
             if (!isAlreadyRunning && intent.getAction().equals(FIRST_TIME_START_SERVICE)) {
                 Log.v(TAG, "Prepare to start service.");
                 isAlreadyRunning = true;
@@ -147,30 +156,40 @@ public class xmind_service extends Service implements Probe.DataListener {
                 getServiceStatus();
 
                 GetCurrentRunningApp gcra = new GetCurrentRunningApp(mContext);
-            } else if(intent != null && intent.getAction().equals(TAKE_PICTURE)){
-                GetCurrentRunningApp gcra = new GetCurrentRunningApp(mContext);
-                //TODO write db
+                FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
+                FDB_Helper.addLog(FunfDataBaseHelper.CURRENT_FOREGROUND_APP, gcra.getCurrentAppName(), String.valueOf(System.currentTimeMillis()));
+                FDB_Helper.close();
+            } else if (intent != null && intent.getAction().equals(TAKE_PICTURE)) {
+                //using file observer to get photo event, NEW_PICTURE action is useless currently.
+                isNewPictureByReceiver = true;
+                Log.i(TAG, "Get take picture action from receiver!");
             }
-        }else
+        } else
             Log.e(TAG, "Error, Start service with issue.");
 
-        observer = new FileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA") { // set up a file observer to watch the DCIM directory
-            @Override
-            public void onEvent(int event, String file) {
-                //Observing a specific folder, and write DB if there is any new file has been created.
-                if(event == FileObserver.CREATE && !file.equals(".probe")){ // check if its a "create" and not equal to .probe because thats created every time camera is started
-//                    Log.d(TAG, "===========File created [" + android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA/" + file + "]");
-                    GetCurrentRunningApp gcra = new GetCurrentRunningApp(mContext);//get current app's name.
-                    FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, "data");
-                    //NEW_Picture, app name, time
-                    FDB_Helper.addLog("NEW_Picture", gcra.getCurrentAppName(), String.valueOf(System.currentTimeMillis()));
-//                    Log.v(TAG, "Current timestamp : " + System.currentTimeMillis());
-                    FDB_Helper.close();
+
+        if (!isNewPictureByReceiver) {//FileObserver wouldn't active if we could get NEW_Picture action from receiver.
+            Log.i(TAG, "FileObserver is Enabled.");
+//            String albumPath = "";
+            File f = new File(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA");
+            if (f.isDirectory())
+                addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Came100MEDIAra");
+            else
+                Log.e(TAG, "100MEDIA NOT exist");
+
+            File f2 = new File(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera");
+            if (f2.isDirectory())
+                addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera");
+            else
+                Log.e(TAG, "Camera NOT exist");
+        } else {
+            if (al_fo.size() > 0) {
+                for (int i = 0; i < al_fo.size(); i++) {
+                    al_fo.get(i).stopWatching();
                 }
             }
-        };
-        observer.startWatching();
-
+            Log.i(TAG, "FileObserver is disabled, since we could get NEW_Picture action from receiver.");
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -181,7 +200,7 @@ public class xmind_service extends Service implements Probe.DataListener {
 
     public void getBatteryStatus() {
         if (funfManager != null) {
-            Log.v(TAG, "Prepare to enable battery's pipeline.");
+//            Log.v(TAG, "Prepare to enable battery's pipeline.");
             Gson gson = funfManager.getGson();
             batteryProbe = gson.fromJson(new JsonObject(), BatteryProbe.class);
             batteryProbe.registerListener(xmind_service.this);
@@ -193,7 +212,7 @@ public class xmind_service extends Service implements Probe.DataListener {
 
     public void getServiceStatus() {
         if (funfManager != null) {
-            Log.v(TAG, "Prepare to enable ServiceProbe's pipeline.");
+//            Log.v(TAG, "Prepare to enable ServiceProbe's pipeline.");
             Gson gson = funfManager.getGson();
             servicesProbe = gson.fromJson(new JsonObject(), ServicesProbe.class);
             servicesProbe.registerListener(xmind_service.this);
@@ -211,15 +230,14 @@ public class xmind_service extends Service implements Probe.DataListener {
         alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.add(Calendar.SECOND, 60); // first time
-        long frequency = 60 * 1000; // in ms
+        calendar.add(Calendar.SECOND, 60);
+        long frequency = 60 * 1000;
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
-        Log.v(TAG, "Alarm has been setting.");
+//        Log.v(TAG, "Alarm has been setting.");
     }
 
     private void registerProbes(boolean funfManagerIsNotNull) {
         if (funfManagerIsNotNull) {
-            Log.v(TAG, "(On X-mind service)Prepare to enalbe pepeline and probes.");
             Gson gson = funfManager.getGson();
             wifiProbe = gson.fromJson(new JsonObject(), WifiProbe.class);
             bluetoothProbe = gson.fromJson(new JsonObject(), BluetoothProbe.class);
@@ -251,7 +269,7 @@ public class xmind_service extends Service implements Probe.DataListener {
 
     private Probe.DataListener runningAppListener = new Probe.DataListener() {
         public void onDataReceived(IJsonObject completeProbeUri, IJsonObject data) {
-            Log.v(TAG, "(1)(On X-mind service)RunningApplications: " + data);
+//            Log.v(TAG, "(1)(On X-mind service)RunningApplications: " + data);
 
         }
 
@@ -264,8 +282,8 @@ public class xmind_service extends Service implements Probe.DataListener {
     public void onDataReceived(IJsonObject iJsonObject, IJsonObject iJsonObject1) {
 //        Log.i(TAG, "(3)Get event : " + getType(iJsonObject.get("@type").toString()) + ", data : " + iJsonObject1.toString());
 
-        FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, "data");
-        switch(getType(iJsonObject.get("@type").toString())){
+        FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
+        switch (getType(iJsonObject.get("@type").toString())) {
             case "HardwareInfoProbe":
                 FDB_Helper.addLog(getType(iJsonObject.get("@type").toString()), iJsonObject1.get("model").toString(), iJsonObject1.get("timestamp").toString());
                 break;
@@ -295,6 +313,32 @@ public class xmind_service extends Service implements Probe.DataListener {
     @Override
     public void onDataCompleted(IJsonObject iJsonObject, JsonElement jsonElement) {
 //        Log.i(TAG, "(4)(On X-mind service)The probe [" + iJsonObject.get("@type") + "] has been disable service.");
+    }
+
+    private FileObserver addFileObserver(String path) {
+        FileObserver observer = new FileObserver(path) { // set up a file observer to watch the DCIM directory
+            @Override
+            public void onEvent(int event, String file) {
+                //Observing a specific folder, and write DB if there is any new file has been created.
+                if (event == FileObserver.CREATE && !file.equals(".probe")) { // check if its a "create" and not equal to .probe because thats created every time camera is started
+//                    Log.d(TAG, "===========File created [" + android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA/" + file + "]");
+                    handler.postDelayed(new Runnable() {//Check foreground app after 5 seconds when got new picture.
+                        @Override
+                        public void run() {
+                            // Do something after 5s = 5000ms
+                            GetCurrentRunningApp gcra = new GetCurrentRunningApp(mContext);//get current app's name.
+                            FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
+                            //NEW_Picture, app name, time
+                            Log.v(TAG, "==== new picture foreground app : " + gcra.getCurrentAppName());
+                            FDB_Helper.addLog(FunfDataBaseHelper.CURRENT_FOREGROUND_APP_ON_NEW_PICUTR, gcra.getCurrentAppName(), String.valueOf(System.currentTimeMillis()));
+                            FDB_Helper.close();
+                        }
+                    }, 4000);//Delay 4 seconds for catch foreground app(who using camera to take picture).
+                }
+            }
+        };
+        observer.startWatching();
+        return observer;
     }
 
 }

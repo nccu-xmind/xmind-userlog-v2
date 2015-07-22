@@ -53,6 +53,7 @@ public class Activity_xmind extends Activity {
         aq.id(R.id.btn_pipeline_controller).clicked(controller_ocl);
         aq.id(R.id.btn_clear_DB).clicked(controller_ocl);
         aq.id(R.id.iv_iv_1).background(R.drawable.gedetama2);
+        aq.id(R.id.btn_clear_DB).enabled(false);
 
         Intent intent_initService = new Intent(mContext, xmind_service.class);
         intent_initService.setAction(xmind_service.FIRST_TIME_START_SERVICE);
@@ -60,7 +61,6 @@ public class Activity_xmind extends Activity {
         mContext.startService(intent_initService);
         isServiceStart = true;
         updatePipelineStatus();
-
     }
 
     private View.OnClickListener controller_ocl = new View.OnClickListener() {
@@ -69,24 +69,19 @@ public class Activity_xmind extends Activity {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.btn_pipeline_controller:
-                    Log.v(TAG, "Clicked.");
                     if (isServiceStart) {
                         mContext.stopService(new Intent(mContext, xmind_service.class));
                         isServiceStart = false;
                         showDataBastInListView();
-                        Log.v(TAG, "Stop service");
                     } else {
                         aq.id(R.id.iv_iv_1).visible();
-//                        iv_iv_1.setVisibility(View.VISIBLE);
                         aq.id(R.id.timelimits_main_listview).gone();
-//                        timelimitst_listview.setVisibility(View.GONE);
-
+                        aq.id(R.id.btn_clear_DB).enabled(false);
                         Intent intent_initService = new Intent(mContext, xmind_service.class);
                         intent_initService.setAction(xmind_service.FIRST_TIME_START_SERVICE);
 
                         mContext.startService(intent_initService);
                         isServiceStart = true;
-                        Log.v(TAG, "Start service");
                     }
                     updatePipelineStatus();
                     break;
@@ -102,7 +97,7 @@ public class Activity_xmind extends Activity {
         aq.id(R.id.iv_iv_1).gone();
         aq.id(R.id.timelimits_main_listview).visible();
         //Show DataBase if service is suspends.
-        FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, "data");
+        FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         Cursor cursor = FDB_Helper.selectDB();
         ArrayList<ProbesObject> al_ProbesObjects = new ArrayList<ProbesObject>();
 
@@ -117,6 +112,7 @@ public class Activity_xmind extends Activity {
         }
 
         if (al_ProbesObjects.size() > 0) {
+            aq.id(R.id.btn_clear_DB).enabled(true);//Enable delete button if size not zero.
             mListViewAdapter = new ListViewAdapter(Activity_xmind.this, 0, al_ProbesObjects);
             aq.id(R.id.timelimits_main_listview).getListView().setAdapter(mListViewAdapter);
         } else
@@ -170,12 +166,12 @@ public class Activity_xmind extends Activity {
     }
 
     public void removeAll() {
-        FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, "data");
+        FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         SQLiteDatabase db = FDB_Helper.getWritableDatabase(); // helper is object extends SQLiteOpenHelper
-        db.delete("data", null, null);
-        db.delete("data", null, null);
+        db.delete(FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME, null, null);
         db.close();
         aq.id(R.id.timelimits_main_listview).getListView().setAdapter(null);
+        aq.id(R.id.btn_clear_DB).enabled(false);
         Toast.makeText(mContext, "===Delete all data===", Toast.LENGTH_LONG).show();
     }
 }

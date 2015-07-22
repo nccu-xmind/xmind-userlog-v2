@@ -19,20 +19,25 @@ import edu.mit.media.funf.util.UuidUtil;
  */
 public class FunfDataBaseHelper extends SQLiteOpenHelper {
     private Context mContext;
+    public static final String XMIND_FUNF_DATABASE_NAME = "XmindFunf_Database";
     public static final int CURRENT_VERSION = 1;
     public static final String COLUMN_NAME = "name";
     public static final String COLUMN_TIMESTAMP = "timestamp";
     public static final String COLUMN_VALUE = "value";
-    public static final NameValueDatabaseHelper.Table DATA_TABLE = new NameValueDatabaseHelper.Table("data", Arrays.asList(new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("name", "TEXT"), new NameValueDatabaseHelper.Column("timestamp", "FLOAT"), new NameValueDatabaseHelper.Column("value", "TEXT")}));
+    public static final NameValueDatabaseHelper.Table DATA_TABLE = new NameValueDatabaseHelper.Table(XMIND_FUNF_DATABASE_NAME, Arrays.asList(new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("name", "TEXT"), new NameValueDatabaseHelper.Column("timestamp", "FLOAT"), new NameValueDatabaseHelper.Column("value", "TEXT")}));
     public static final String COLUMN_DATABASE_NAME = "dbname";
     public static final String COLUMN_INSTALLATION = "device";
     public static final String COLUMN_UUID = "uuid";
     public static final String COLUMN_CREATED = "created";
     public static final NameValueDatabaseHelper.Table FILE_INFO_TABLE = new NameValueDatabaseHelper.Table("file_info", Arrays.asList(new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("dbname", "TEXT"), new NameValueDatabaseHelper.Column("device", "TEXT"), new NameValueDatabaseHelper.Column("uuid", "TEXT"), new NameValueDatabaseHelper.Column("created", "FLOAT")}));
+
+    //Columns name
+    public static final String CURRENT_FOREGROUND_APP = "Current_ForeGround_AppName";
+    public static final String CURRENT_FOREGROUND_APP_ON_NEW_PICUTR = "Current_ForeGround_Camera_AppName";
+
     private final String databaseName;
 
     public FunfDataBaseHelper(Context context, String name) {
-//        super(context, name, (SQLiteDatabase.CursorFactory)null, version);
         super(context, COLUMN_DATABASE_NAME, null, CURRENT_VERSION);
         this.mContext = context;
         this.databaseName = name;
@@ -59,14 +64,14 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
     /* select all record */
     public Cursor selectData(){
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query("data", new String[] {"_id", "name", "timestamp", "value"}, null, null, null, null, null);
+        Cursor cursor = db.query(XMIND_FUNF_DATABASE_NAME, new String[] {"_id", "name", "timestamp", "value"}, null, null, null, null, null);
         return cursor;
     }
 
     /* select all record2 */
     public Cursor selectData2(){
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query("file_info", new String[] {"_id", "dbname", "device", "uuid", "created"}, null, null, null, null, null);
+        Cursor cursor = db.query("file_info", new String[]{"_id", "dbname", "device", "uuid", "created"}, null, null, null, null, null);
         return cursor;
     }
 
@@ -78,21 +83,13 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         cv.put("name", name);
         cv.put("value", value);
         cv.put("timestamp", Double.valueOf(timestamp));
-        long row = db.insert("data", null, cv);
+        long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
         return row;
     }
 
     public Cursor selectDB(){
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query("data", new String[] {"_id", "name", "timestamp", "value"}, null, null, null, null, null);
-//        if(cursor.getCount() > 0){
-//            cursor.moveToFirst();
-//            for(int i = 0; i < cursor.getCount(); i++){
-//                Log.v("ssku", "====Column " + i + " ID : " + cursor.getString(0) + "Column 1 : " + cursor.getString(1) + ", Column 2 : " + cursor.getString(2) + ", Column 3 : " + cursor.getString(3));
-//                cursor.moveToNext();
-//            }
-//        }else
-//            Log.e("ssku", "selectDB couldn't get any data...");
+        Cursor cursor = db.query(XMIND_FUNF_DATABASE_NAME, new String[]{"_id", "name", "timestamp", "value"}, null, null, null, null, null);
         return cursor;
     }
 }
