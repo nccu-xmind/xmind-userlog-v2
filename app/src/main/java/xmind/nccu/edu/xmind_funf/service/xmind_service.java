@@ -3,14 +3,21 @@ package xmind.nccu.edu.xmind_funf.service;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.location.LocationManager;
+import android.net.wifi.SupplicantState;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.FileObserver;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.androidquery.AQuery;
 import com.google.gson.Gson;
@@ -117,6 +124,8 @@ public class xmind_service extends Service implements Probe.DataListener {
                 al_fo.get(i).stopWatching();
             }
         }
+
+        this.unregisterReceiver(wifiStatusReceiver);
     }
 
     private String getType(String targetType) {
@@ -144,6 +153,34 @@ public class xmind_service extends Service implements Probe.DataListener {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         mContext = this;
+
+        //Only register this and enable it on first time.
+        if (!isAlreadyRunning) {
+            Log.v(TAG, "First time --- create wifi and location service.");
+            //TODO Testing...Get event if wifi state has been changed.
+            IntentFilter filter = new IntentFilter(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
+            this.registerReceiver(wifiStatusReceiver, filter);
+
+            //TODO GPS listener is ready.
+            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            lm.addGpsStatusListener(new android.location.GpsStatus.Listener() {
+                public void onGpsStatusChanged(int event) {
+//                Log.v(TAG, "Event : " + event);
+                    switch (event) {
+                        case 1://GPS Started
+                            Toast.makeText(mContext, "===GPS system has been triggered(Testing)===", Toast.LENGTH_LONG).show();
+                            break;
+                        case 2://GPS Stoped
+                            break;
+                        case 4://GPS Working(e.g. Open Google map and watching it.)
+                            break;
+
+                    }
+                }
+            });
+        }else
+            Log.w(TAG, "Not first time, wouldn't enable the two service again.");
+
         if (intent != null && intent.getAction() != null) {
             if (!isAlreadyRunning && intent.getAction().equals(FIRST_TIME_START_SERVICE)) {
                 Log.v(TAG, "Prepare to start service.");
@@ -187,11 +224,43 @@ public class xmind_service extends Service implements Probe.DataListener {
                 for (int i = 0; i < al_fo.size(); i++) {
                     al_fo.get(i).stopWatching();
                 }
+                Log.i(TAG, "FileObserver is disabled, since we could get NEW_Picture action from receiver.");
             }
-            Log.i(TAG, "FileObserver is disabled, since we could get NEW_Picture action from receiver.");
         }
+
         return super.onStartCommand(intent, flags, startId);
     }
+
+    //Testing...
+    BroadcastReceiver wifiStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "checking wifi state...");
+            SupplicantState supState;
+            WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+            supState = wifiInfo.getSupplicantState();
+            Log.d(TAG, "supplicant state: " + supState);
+//
+//            SherlockDialogFragment dialog = (SherlockDialogFragment) fragmentManager
+//                    .findFragmentByTag(WifiAlertDialogFragment.DIALOG_WIFI);
+
+            if (supState.equals(SupplicantState.COMPLETED)) {
+                Log.d(TAG, "wifi enabled and connected");
+            } else {
+//                WifiAlertDialogFragment.wifiCheck(HomeActivity.this);
+                if (supState.equals(SupplicantState.SCANNING)) {
+                    Log.d(TAG, "wifi scanning");
+                } else if (supState.equals(SupplicantState.DISCONNECTED)) {
+                    Log.d(TAG, "wifi disonnected");
+                } else {
+//                    Toast.makeText(HomeActivity.this, "Wifi Enabling",
+//                            Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "wifi connecting");
+                }
+            }
+        }
+    };
 
     @Override
     public IBinder onBind(Intent intent) {
