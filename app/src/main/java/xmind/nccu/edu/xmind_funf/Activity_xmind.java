@@ -104,6 +104,18 @@ public class Activity_xmind extends Activity {
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {
+                Log.v(TAG, "Name : " + cursor.getString(1)
+                                + " , timestamp : " + cursor.getString(2)
+                                + " , batteryLevel : " + cursor.getString(3)
+                                + " , process : " + cursor.getString(4)
+                                + " , latitude : " + cursor.getString(5)
+                                + " , longitude : " + cursor.getString(6)
+                                + " , rssi : " + cursor.getString(7)
+                                + " , isScreenOn : " + cursor.getString(8)
+                                + " , packageName : " + cursor.getString(9)
+                                + " , wifitag : " + cursor.getString(10)
+                                + " , mobiletag : " + cursor.getString(11)
+                );
                 ProbesObject po = new ProbesObject(cursor.getString(1), cursor.getString(2), cursor.getString(3));
                 al_ProbesObjects.add(po);
                 cursor.moveToNext();
