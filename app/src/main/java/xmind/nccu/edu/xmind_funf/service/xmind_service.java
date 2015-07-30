@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
@@ -84,6 +85,9 @@ public class xmind_service extends Service implements Probe.DataListener {
     private ArrayList<FileObserver> al_fo = new ArrayList<>();
     private final Handler handler = new Handler();
 
+    //disable hardwareInfo probe if funf is already got it.
+    private SharedPreferences funf_xmind_sp;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -154,11 +158,10 @@ public class xmind_service extends Service implements Probe.DataListener {
         //Register GPS listener, wifi listener and enable them on first time.
         if (!isAlreadyRunning) {
             Log.v(TAG, "First time --- create wifi and location service.");
-            //TODO Testing...Get event if wifi state has been changed.
             IntentFilter filter = new IntentFilter(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
             this.registerReceiver(wifiStatusReceiver, filter);
 
-            //TODO GPS listener is ready.
+            //GPS listener is ready.
 //            final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 //            lm.addGpsStatusListener(new android.location.GpsStatus.Listener() {
 //                public void onGpsStatusChanged(int event) {
@@ -228,8 +231,9 @@ public class xmind_service extends Service implements Probe.DataListener {
             } else if(supState.equals(SupplicantState.DISCONNECTED)){
                 wifiTag = 2;
             }
-            Log.v(TAG, "Wifi status changed : " + wifiTag);
-            FDB_Helper.addNetworkStateRecord(FunfDataBaseHelper.TAKE_A_NEW_PHOTO_EVENT, String.valueOf(System.currentTimeMillis()), wifiTag, is3gAvailable);
+            if(wifiTag != -1){//only add wifi state when wifi connected or disconnected.
+                FDB_Helper.addNetworkStateRecord(FunfDataBaseHelper.WIFI_STATUS_PROBE, String.valueOf(System.currentTimeMillis()), wifiTag, is3gAvailable);
+            }
             FDB_Helper.close();
 //            else {
 ////                WifiAlertDialogFragment.wifiCheck(HomeActivity.this);
@@ -333,23 +337,25 @@ public class xmind_service extends Service implements Probe.DataListener {
         FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         switch (getType(iJsonObject.get("@type").toString())) {
             case "HardwareInfoProbe"://TODO Only record once.
-//                FDB_Helper.addHardwareInfo(getType(iJsonObject.get("@type").toString()), iJsonObject1.get("timestamp").toString(), iJsonObject1.get("model").toString(), iJsonObject1.get("deviceId").toString());
+                FunfDataBaseHelper FDB_Helper_Device = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_DEVICE);
+                FDB_Helper_Device.addHardwareInfo(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("model").toString(), iJsonObject1.get("deviceId").toString());
+                FDB_Helper_Device.close();
                 break;
             //using wifiStatusReceiver instead.
 //            case "WifiProbe":
 //                FDB_Helper.addLog(getType(iJsonObject.get("@type").toString()), iJsonObject1.get("SSID").toString(), iJsonObject1.get("timestamp").toString());
 //                break;
             case "BatteryProbe":
-                FDB_Helper.addBatteryRecord(getType(iJsonObject.get("@type").toString()), iJsonObject1.get("timestamp").toString(), iJsonObject1.get("level").toString());
+                FDB_Helper.addBatteryRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("level").toString());
                 break;
             case "BluetoothProbe":
-                FDB_Helper.addBluetoothRecord(getType(iJsonObject.get("@type").toString()), iJsonObject1.get("timestamp").toString(), iJsonObject1.get("android.bluetooth.device.extra.RSSI").toString());
+                FDB_Helper.addBluetoothRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("android.bluetooth.device.extra.RSSI").toString());
                 break;
             case "ServicesProbe":
-                FDB_Helper.addServiceRecord(getType(iJsonObject.get("@type").toString()), iJsonObject1.get("timestamp").toString(), iJsonObject1.get("process").toString());
+                FDB_Helper.addServiceRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("process").toString());
                 break;
             case "ScreenProbe":
-                FDB_Helper.addScreenRecord(getType(iJsonObject.get("@type").toString()), iJsonObject1.get("timestamp").toString(), iJsonObject1.get("screenOn").toString());
+                FDB_Helper.addScreenRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("screenOn").toString());
                 if (iJsonObject1.get("screenOn").toString().equals("true")) {//Only record it on screen on.
                     handler.postDelayed(new Runnable() {
                         @Override
@@ -364,7 +370,7 @@ public class xmind_service extends Service implements Probe.DataListener {
                 }
                 break;
             case "LocationProbe":
-                FDB_Helper.addLocationRecord(getType(iJsonObject.get("@type").toString()), iJsonObject1.get("timestamp").toString(), iJsonObject1.get("mLatitude").toString(), iJsonObject1.get("mLongitude").toString());
+                FDB_Helper.addLocationRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("mLatitude").toString(), iJsonObject1.get("mLongitude").toString());
                 break;
         }
         FDB_Helper.close();

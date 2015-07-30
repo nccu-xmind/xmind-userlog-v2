@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -26,7 +27,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_VALUE = "value";
     public static final NameValueDatabaseHelper.Table DATA_TABLE = new NameValueDatabaseHelper.Table(XMIND_FUNF_DATABASE_NAME, Arrays.asList(
             new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("name", "TEXT"),
-                    new NameValueDatabaseHelper.Column("timestamp", "FLOAT"),
+                    new NameValueDatabaseHelper.Column("timestamp", "TEXT"),
                     new NameValueDatabaseHelper.Column("batteryLevel", "FLOAT"),
                     new NameValueDatabaseHelper.Column("process", "TEXT"),
                     new NameValueDatabaseHelper.Column("latitude", "FLOAT"),
@@ -42,7 +43,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_CREATED = "created";
     public static final NameValueDatabaseHelper.Table FILE_INFO_TABLE = new NameValueDatabaseHelper.Table(XMIND_FUNF_DATABASE_DEVICE, Arrays.asList(
             new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("name", "TEXT"),
-                    new NameValueDatabaseHelper.Column("timestamp", "FLOAT"),
+                    new NameValueDatabaseHelper.Column("timestamp", "TEXT"),
                     new NameValueDatabaseHelper.Column("model", "TEXT"),
                     new NameValueDatabaseHelper.Column("deviceId", "TEXT")}));
 
@@ -54,6 +55,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
 
     //TAG
     public static final String REGULAR_CHECK = "Regular_Check_fg_App";
+    public static final String WIFI_STATUS_PROBE = "Wifi_Status";
 
     private final String databaseName;
 
@@ -111,7 +113,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
-        cv.put("timestamp", Double.valueOf(timestamp));
+        cv.put("timestamp", timestamp);
         cv.put("batteryLevel", Float.valueOf(level));
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
         return row;
@@ -121,7 +123,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
-        cv.put("timestamp", Double.valueOf(timestamp));
+        cv.put("timestamp", timestamp);
         cv.put("process", process);
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
         return row;
@@ -131,7 +133,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
-        cv.put("timestamp", Double.valueOf(timestamp));
+        cv.put("timestamp", timestamp);
         cv.put("latitude", Double.valueOf(mLatitude));
         cv.put("longitude", Double.valueOf(mLongitude));
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
@@ -142,7 +144,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
-        cv.put("timestamp", Double.valueOf(timestamp));
+        cv.put("timestamp", timestamp);
         cv.put("rssi", Integer.valueOf(RSSI));
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
         return row;
@@ -152,7 +154,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
-        cv.put("timestamp", Double.valueOf(timestamp));
+        cv.put("timestamp", timestamp);
         cv.put("isScreenOn", isScreenOn);
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
         return row;
@@ -162,7 +164,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
-        cv.put("timestamp", Double.valueOf(timestamp));
+        cv.put("timestamp", timestamp);
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
         return row;
     }
@@ -171,7 +173,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
-        cv.put("timestamp", Double.valueOf(timestamp));
+        cv.put("timestamp", timestamp);
         cv.put("packageName", packageName);
 //        cv.put("tag", TAG);//1.First app, 2.After take photo, 3.Regular checking...etc
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
@@ -183,27 +185,35 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
-        cv.put("timestamp", Double.valueOf(timestamp));
+        cv.put("timestamp", timestamp);
         cv.put("wifitag", wifiTag);
         cv.put("mobiletag", String.valueOf(isMobileDataAvailable));
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
         return row;
     }
 
-//    public long addHardwareInfo(String name, String timestamp, String model, String deviceId) {
-//        SQLiteDatabase db = this.getWritableDatabase();
-//        ContentValues cv = new ContentValues();
-//        cv.put("name", name);
-//        cv.put("timestamp", Double.valueOf(timestamp));
-//        cv.put("model", model);
-//        cv.put("deviceId", deviceId);
-//        long row = db.insert(XMIND_FUNF_DATABASE_DEVICE, null, cv);
-//        return row;
-//    }
+    public long addHardwareInfo(String name, String timestamp, String model, String deviceId) {
+        Log.w("ssku", "Add HardwareInfo into DB.");
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("name", name);
+        cv.put("timestamp", timestamp);
+        cv.put("model", model);
+        cv.put("deviceId", deviceId);
+        long row = db.insert(XMIND_FUNF_DATABASE_DEVICE, null, cv);
+        Log.w("ssku", "Add HardwareInfo into DB.(Success)");
+        return row;
+    }
 
     public Cursor selectDB() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(XMIND_FUNF_DATABASE_NAME, new String[]{"_id", "name", "timestamp", "batteryLevel", "process", "latitude", "longitude", "rssi", "isScreenOn", "packageName", "wifitag", "mobiletag"}, null, null, null, null, null);
+        return cursor;
+    }
+
+    public Cursor selectDeviceDB() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(XMIND_FUNF_DATABASE_DEVICE, new String[]{"_id", "name", "timestamp", "model", "deviceId"}, null, null, null, null, null);
         return cursor;
     }
 }
