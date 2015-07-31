@@ -352,7 +352,8 @@ public class xmind_service extends Service implements Probe.DataListener {
                 FDB_Helper.addBluetoothRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("android.bluetooth.device.extra.RSSI").toString());
                 break;
             case "ServicesProbe":
-                FDB_Helper.addServiceRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("process").toString());
+                //TODO too annoying ...hide this temporary...
+//                FDB_Helper.addServiceRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("process").toString());
                 break;
             case "ScreenProbe":
                 FDB_Helper.addScreenRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("screenOn").toString());

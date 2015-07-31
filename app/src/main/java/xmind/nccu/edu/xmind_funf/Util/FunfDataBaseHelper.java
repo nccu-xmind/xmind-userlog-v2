@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.Arrays;
 import java.util.UUID;
@@ -193,7 +192,6 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
     }
 
     public long addHardwareInfo(String name, String timestamp, String model, String deviceId) {
-        Log.w("ssku", "Add HardwareInfo into DB.");
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
@@ -201,7 +199,6 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         cv.put("model", model);
         cv.put("deviceId", deviceId);
         long row = db.insert(XMIND_FUNF_DATABASE_DEVICE, null, cv);
-        Log.w("ssku", "Add HardwareInfo into DB.(Success)");
         return row;
     }
 

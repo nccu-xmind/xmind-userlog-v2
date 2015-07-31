@@ -11,6 +11,11 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <TextView
+            android:id="@+id/tv_device_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <Button
             android:id="@+id/btn_pipeline_controller"
             android:layout_width="match_parent"
@@ -28,6 +33,11 @@
             android:layout_width="match_parent"
             android:layout_height="120dp"
             android:text="Delete all data" />
+
+        <TextView
+            android:id="@+id/tv_db_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
         <ImageView
             android:id="@+id/iv_iv_1"

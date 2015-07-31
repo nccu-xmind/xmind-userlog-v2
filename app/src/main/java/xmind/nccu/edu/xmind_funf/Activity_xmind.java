@@ -74,10 +74,12 @@ public class Activity_xmind extends Activity {
                     if (isServiceStart) {
                         mContext.stopService(new Intent(mContext, xmind_service.class));
                         isServiceStart = false;
+                        aq.id(R.id.tv_db_count).visible();
                         showDataBastInListView();
 //                        printoutDB();
                     } else {
                         aq.id(R.id.iv_iv_1).visible();
+                        aq.id(R.id.tv_db_count).gone();
                         aq.id(R.id.timelimits_main_listview).gone();
                         aq.id(R.id.btn_clear_DB).enabled(false);
                         Intent intent_initService = new Intent(mContext, xmind_service.class);
@@ -112,6 +114,7 @@ public class Activity_xmind extends Activity {
             if (type.equals("HardwareInfoProbe")) {
                 po.setModel(deviceCursor.getString(3));
                 po.setDeviceId(deviceCursor.getString(4));
+                aq.id(R.id.tv_device_info).text("Model - " + deviceCursor.getString(3) + ", ID : " + deviceCursor.getString(4));
             }
             deviceCursor.close();
             al_ProbesObjects.add(po);
@@ -119,6 +122,7 @@ public class Activity_xmind extends Activity {
 
         FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         Cursor cursor = FDB_Helper.selectDB();
+        aq.id(R.id.tv_db_count).text("Total : " + (1 + cursor.getCount()));//two database
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {
@@ -355,6 +359,7 @@ public class Activity_xmind extends Activity {
 
         aq.id(R.id.timelimits_main_listview).getListView().setAdapter(null);
         aq.id(R.id.btn_clear_DB).enabled(false);
+        aq.id(R.id.tv_db_count).text("No data currently.");
         Toast.makeText(mContext, "===Delete all data===", Toast.LENGTH_SHORT).show();
     }
 }
