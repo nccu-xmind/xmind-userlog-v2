@@ -5,7 +5,6 @@
         "name":"default",
         "version":1,
         "data":[
-        "edu.mit.media.funf.probe.builtin.WifiProbe",
         "edu.mit.media.funf.probe.builtin.BatteryProbe",
         "edu.mit.media.funf.probe.builtin.BluetoothProbe",
         "edu.mit.media.funf.probe.builtin.LocationProbe",
@@ -17,5 +16,7 @@
         ]
         }
     </string>
+
+    <string name="uploading_data">Please wait while loading,&#8230;</string>
 
 </resources>

@@ -1,4 +1,4 @@
-package xmind.nccu.edu.xmind_funf.service;
+package xmind.nccu.edu.xmind_funf.Service;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -59,7 +59,7 @@ public class xmind_service extends Service implements Probe.DataListener {
     private FunfManager funfManager;
     private BasicPipeline pipeline;
 
-//    private WifiProbe wifiProbe;//okay, but using wifiStatusReceiver instead.
+    //    private WifiProbe wifiProbe;//okay, but using wifiStatusReceiver instead.
     private BatteryProbe batteryProbe;//okay
     private BluetoothProbe bluetoothProbe;//okay
     private CallLogProbe callLogProbe;
@@ -75,6 +75,7 @@ public class xmind_service extends Service implements Probe.DataListener {
 
     private boolean isAlreadyRunning = true;
     private boolean isNewPictureByReceiver = false;
+    private boolean isScreenOn = true;
 
     private AlarmManager alarmManager;
     private PendingIntent pendingIntent;
@@ -88,18 +89,18 @@ public class xmind_service extends Service implements Probe.DataListener {
     //disable hardwareInfo probe if funf is already got it.
     private SharedPreferences funf_xmind_sp;
 
+
     @Override
     public void onCreate() {
         super.onCreate();
         isAlreadyRunning = false;//set it false if first time running this app.
     }
 
-    //STOP - service and unregister listener
+    //STOP - service and unregister listener here
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (funfManager != null) {
-            Log.v(TAG, "(On X-mind service)Prepare to disable pipeline and alarmManager");
             funfManager.disablePipeline(PIPELINE_NAME);
 
 //            wifiProbe.unregisterListener(xmind_service.this);
@@ -129,6 +130,9 @@ public class xmind_service extends Service implements Probe.DataListener {
         this.unregisterReceiver(wifiStatusReceiver);
     }
 
+    /*
+    get probe type from input string
+     */
     private String getType(String targetType) {
         String result = "";
         if (targetType != null && !targetType.equals("")) {
@@ -151,6 +155,9 @@ public class xmind_service extends Service implements Probe.DataListener {
         }
     };
 
+    /*
+    enable wifi listener here and executive different probes according action event
+     */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         mContext = this;
@@ -193,10 +200,13 @@ public class xmind_service extends Service implements Probe.DataListener {
                 getBatteryStatus();
                 getServiceStatus();
 
-                GetCurrentRunningApp gcra = new GetCurrentRunningApp(mContext);
-                FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
-                FDB_Helper.addCurrentForegroundAppRecord(FunfDataBaseHelper.CURRENT_FOREGROUND_APP, String.valueOf(System.currentTimeMillis()), gcra.getCurrentAppName());
-                FDB_Helper.close();
+
+                if (isScreenOn) {
+                    GetCurrentRunningApp gcra = new GetCurrentRunningApp(mContext);
+                    FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
+                    FDB_Helper.addCurrentForegroundAppRecord(FunfDataBaseHelper.CURRENT_FOREGROUND_APP, String.valueOf(System.currentTimeMillis()), gcra.getCurrentAppName());
+                    FDB_Helper.close();
+                }
             } else if (intent != null && intent.getAction().equals(TAKE_PICTURE)) {
                 //using file observer to get photo event, NEW_PICTURE action is useless currently.
                 FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
@@ -213,7 +223,9 @@ public class xmind_service extends Service implements Probe.DataListener {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    //Wifi Tag : 0 == wifi has been turned on and connected; 1 == wifi has been turned off; 2 == wifi turned on, but no signal currently.
+    /*
+        Wifi Tag : 0 == wifi has been turned on and connected; 1 == wifi has been turned off; 2 == wifi turned on, but no signal currently.
+     */
     private BroadcastReceiver wifiStatusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -228,10 +240,10 @@ public class xmind_service extends Service implements Probe.DataListener {
             int wifiTag = -1;
             if (supState.equals(SupplicantState.COMPLETED)) {
                 wifiTag = wifiManager.isWifiEnabled() ? 0 : 1;
-            } else if(supState.equals(SupplicantState.DISCONNECTED)){
+            } else if (supState.equals(SupplicantState.DISCONNECTED)) {
                 wifiTag = 2;
             }
-            if(wifiTag != -1){//only add wifi state when wifi connected or disconnected.
+            if (wifiTag != -1) {//only add wifi state when wifi connected or disconnected.
                 FDB_Helper.addNetworkStateRecord(FunfDataBaseHelper.WIFI_STATUS_PROBE, String.valueOf(System.currentTimeMillis()), wifiTag, is3gAvailable);
             }
             FDB_Helper.close();
@@ -253,6 +265,9 @@ public class xmind_service extends Service implements Probe.DataListener {
         return null;
     }
 
+    /*
+    get phone's battery status by this method
+     */
     public void getBatteryStatus() {
         if (funfManager != null) {
             Gson gson = funfManager.getGson();
@@ -264,6 +279,9 @@ public class xmind_service extends Service implements Probe.DataListener {
             Log.e(TAG, "Enable battery's pipeline failed.");
     }
 
+    /*
+    get service's status by this method
+     */
     public void getServiceStatus() {
         if (funfManager != null) {
             Gson gson = funfManager.getGson();
@@ -288,10 +306,12 @@ public class xmind_service extends Service implements Probe.DataListener {
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
     }
 
+    /*
+    Active all probes and register listener here
+     */
     private void registerProbes(boolean funfManagerIsNotNull) {
         if (funfManagerIsNotNull) {
             Gson gson = funfManager.getGson();
-//            wifiProbe = gson.fromJson(new JsonObject(), WifiProbe.class);
             bluetoothProbe = gson.fromJson(new JsonObject(), BluetoothProbe.class);
             callLogProbe = gson.fromJson(new JsonObject(), CallLogProbe.class);
             locationProbe = gson.fromJson(new JsonObject(), LocationProbe.class);
@@ -302,7 +322,6 @@ public class xmind_service extends Service implements Probe.DataListener {
 
             pipeline = (BasicPipeline) funfManager.getRegisteredPipeline(PIPELINE_NAME);
 
-//            wifiProbe.registerPassiveListener(xmind_service.this);
             bluetoothProbe.registerPassiveListener(xmind_service.this);
             callLogProbe.registerPassiveListener(xmind_service.this);
             locationProbe.registerPassiveListener(xmind_service.this);
@@ -341,10 +360,6 @@ public class xmind_service extends Service implements Probe.DataListener {
                 FDB_Helper_Device.addHardwareInfo(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("model").toString(), iJsonObject1.get("deviceId").toString());
                 FDB_Helper_Device.close();
                 break;
-            //using wifiStatusReceiver instead.
-//            case "WifiProbe":
-//                FDB_Helper.addLog(getType(iJsonObject.get("@type").toString()), iJsonObject1.get("SSID").toString(), iJsonObject1.get("timestamp").toString());
-//                break;
             case "BatteryProbe":
                 FDB_Helper.addBatteryRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("level").toString());
                 break;
@@ -352,12 +367,14 @@ public class xmind_service extends Service implements Probe.DataListener {
                 FDB_Helper.addBluetoothRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("android.bluetooth.device.extra.RSSI").toString());
                 break;
             case "ServicesProbe":
-                //TODO too annoying ...hide this temporary...
+                //TODO Hide this probe temporary since it's too annoying...
 //                FDB_Helper.addServiceRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("process").toString());
                 break;
             case "ScreenProbe":
                 FDB_Helper.addScreenRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("screenOn").toString());
-                if (iJsonObject1.get("screenOn").toString().equals("true")) {//Only record it on screen on.
+
+                if (iJsonObject1.get("screenOn").toString().equals("true")) {
+                    isScreenOn = true;//Only record it on screen on.
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
@@ -368,7 +385,9 @@ public class xmind_service extends Service implements Probe.DataListener {
                             FDB_Helper.close();
                         }
                     }, 10000);//Detect foreground application after screen unlock 10's.
-                }
+                } else
+                    isScreenOn = false;
+
                 break;
             case "LocationProbe":
                 FDB_Helper.addLocationRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("mLatitude").toString(), iJsonObject1.get("mLongitude").toString());
@@ -383,6 +402,9 @@ public class xmind_service extends Service implements Probe.DataListener {
 //        Log.i(TAG, "(4)(On X-mind service)The probe [" + iJsonObject.get("@type") + "] has been disable service.");
     }
 
+    /*
+    FileObserver for listene if user take a new photo
+     */
     private FileObserver addFileObserver(String path) {
         FileObserver observer = new FileObserver(path) { // set up a file observer to watch the DCIM directory
             @Override
@@ -411,9 +433,12 @@ public class xmind_service extends Service implements Probe.DataListener {
         return observer;
     }
 
+    /*
+    Enable or disable fileobserver depend on deveice
+     */
     private void setFileObserverStatus() {
         //TODO adjust logic here. using SP to check here.
-        Log.v(TAG, "isNewPictureByReceiver : " + isNewPictureByReceiver + ", Size : " + al_fo.size());
+//        Log.v(TAG, "isNewPictureByReceiver : " + isNewPictureByReceiver + ", Size : " + al_fo.size());
         if (!isNewPictureByReceiver) {//FileObserver wouldn't active if we could get NEW_Picture action from receiver.
             if (al_fo.size() == 0) {
                 Log.i(TAG, "FileObserver is Enabled.");
@@ -429,8 +454,6 @@ public class xmind_service extends Service implements Probe.DataListener {
                     al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"));
                 } else
                     Log.e(TAG, "Camera NOT exist");
-            } else {
-                Log.w(TAG, "isNewPictureByReceiver is false, but arraylist is already exist.");
             }
         } else {
             if (al_fo.size() > 0) {

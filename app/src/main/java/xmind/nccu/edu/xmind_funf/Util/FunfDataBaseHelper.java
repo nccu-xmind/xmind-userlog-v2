@@ -7,11 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.Arrays;
-import java.util.UUID;
 
 import edu.mit.media.funf.storage.NameValueDatabaseHelper;
-import edu.mit.media.funf.time.TimeUtil;
-import edu.mit.media.funf.util.UuidUtil;
 
 /**
  * Created by sid.ku on 7/15/15.
@@ -21,9 +18,6 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
     public static final String XMIND_FUNF_DATABASE_NAME = "XmindFunf_Database";
     public static final String XMIND_FUNF_DATABASE_DEVICE = "Device_info";
     public static final int CURRENT_VERSION = 1;
-    public static final String COLUMN_NAME = "name";
-    public static final String COLUMN_TIMESTAMP = "timestamp";
-    public static final String COLUMN_VALUE = "value";
     public static final NameValueDatabaseHelper.Table DATA_TABLE = new NameValueDatabaseHelper.Table(XMIND_FUNF_DATABASE_NAME, Arrays.asList(
             new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("name", "TEXT"),
                     new NameValueDatabaseHelper.Column("timestamp", "TEXT"),
@@ -37,9 +31,6 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
                     new NameValueDatabaseHelper.Column("wifitag", "TEXT"),
                     new NameValueDatabaseHelper.Column("mobiletag", "TEXT")}));
     public static final String COLUMN_DATABASE_NAME = "dbname";
-    public static final String COLUMN_INSTALLATION = "device";
-    public static final String COLUMN_UUID = "uuid";
-    public static final String COLUMN_CREATED = "created";
     public static final NameValueDatabaseHelper.Table FILE_INFO_TABLE = new NameValueDatabaseHelper.Table(XMIND_FUNF_DATABASE_DEVICE, Arrays.asList(
             new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("name", "TEXT"),
                     new NameValueDatabaseHelper.Column("timestamp", "TEXT"),
@@ -68,13 +59,8 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(DATA_TABLE.getCreateTableSQL());
         db.execSQL(FILE_INFO_TABLE.getCreateTableSQL());
-        String installationUuid = UuidUtil.getInstallationId(this.mContext);
-        String fileUuid = UUID.randomUUID().toString();
-        double createdTime = TimeUtil.getTimestamp().doubleValue();
-//        db.execSQL(String.format(Locale.US, "insert into %s (%s, %s, %s, %s) values (\'%s\', \'%s\', \'%s\', %f)", new Object[]{FILE_INFO_TABLE.name, "name", "timestamp", "model", "deviceId", this.databaseName, installationUuid, fileUuid, Double.valueOf(createdTime)}));
     }
 
-    //Testing...
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         String sql = "DROP TABLE IF EXISTS " + databaseName;
@@ -95,18 +81,6 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         Cursor cursor = db.query(XMIND_FUNF_DATABASE_DEVICE, new String[]{"_id", "dbname", "device", "uuid", "created"}, null, null, null, null, null);
         return cursor;
     }
-
-    //testing for add wifi probes
-//    public long addLog(String name, String value, String timestamp){
-//        //testing - insert testing data.
-//        SQLiteDatabase db = this.getWritableDatabase();
-//        ContentValues cv = new ContentValues();
-//        cv.put("name", name);
-//        cv.put("value", value);
-//        cv.put("timestamp", Double.valueOf(timestamp));
-//        long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
-//        return row;
-//    }
 
     public long addBatteryRecord(String name, String timestamp, String level) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -168,13 +142,12 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         return row;
     }
 
-    public long addCurrentForegroundAppRecord(String name, String timestamp, String packageName/*, String TAG*/) {
+    public long addCurrentForegroundAppRecord(String name, String timestamp, String packageName) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("name", name);
         cv.put("timestamp", timestamp);
         cv.put("packageName", packageName);
-//        cv.put("tag", TAG);//1.First app, 2.After take photo, 3.Regular checking...etc
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
         return row;
     }

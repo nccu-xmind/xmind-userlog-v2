@@ -21,10 +21,11 @@ import com.androidquery.AQuery;
 
 import java.util.ArrayList;
 
+import xmind.nccu.edu.xmind_funf.NetworkService.UploadingHelper;
+import xmind.nccu.edu.xmind_funf.Service.xmind_service;
 import xmind.nccu.edu.xmind_funf.Util.FunfDataBaseHelper;
 import xmind.nccu.edu.xmind_funf.Util.ProbesObject;
 import xmind.nccu.edu.xmind_funf.Util.funfHelper;
-import xmind.nccu.edu.xmind_funf.service.xmind_service;
 
 /**
  * @author sid.ku
@@ -63,6 +64,7 @@ public class Activity_xmind extends Activity {
         mContext.startService(intent_initService);
         isServiceStart = true;
         updatePipelineStatus();
+
     }
 
     private View.OnClickListener controller_ocl = new View.OnClickListener() {
@@ -77,6 +79,9 @@ public class Activity_xmind extends Activity {
                         aq.id(R.id.tv_db_count).visible();
                         showDataBastInListView();
 //                        printoutDB();
+                        Log.v("ssku", "Before sending data to lcoal server...");
+                        new UploadingHelper(mContext);
+                        Log.v("ssku", "After sending data to lcoal server...");
                     } else {
                         aq.id(R.id.iv_iv_1).visible();
                         aq.id(R.id.tv_db_count).gone();
@@ -98,6 +103,10 @@ public class Activity_xmind extends Activity {
         }
     };
 
+    /*
+
+    for display data or record on UI, if service has been stoped.
+     */
     private void showDataBastInListView() {
         aq.id(R.id.iv_iv_1).gone();
         aq.id(R.id.timelimits_main_listview).visible();
@@ -182,6 +191,9 @@ public class Activity_xmind extends Activity {
             Toast.makeText(mContext, "No records found in database", Toast.LENGTH_LONG).show();
     }
 
+    /*
+    watching database via logcat
+     */
     private void printoutDB() {
         FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         Cursor cursor = FDB_Helper.selectDB();
@@ -224,10 +236,16 @@ public class Activity_xmind extends Activity {
             Log.e(TAG, "Device cursor is null.");
     }
 
+    /*
+    Update service status
+     */
     private void updatePipelineStatus() {
         aq.id(R.id.tv_pipeline_status).text(isServiceStart ? "Service - Enabled" : "Service - Disable");
     }
 
+    /*
+    UI adapter
+     */
     private class ListViewAdapter extends ArrayAdapter<ProbesObject> {
         private LayoutInflater inflater;
         private ArrayList<ProbesObject> po;
@@ -254,22 +272,6 @@ public class Activity_xmind extends Activity {
                 holder = (ViewHolder) convertView.getTag();
             }
 
-            int gadatama = position % 4;
-            switch (gadatama) {
-                case 0:
-                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_1);
-                    break;
-                case 1:
-                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_2);
-                    break;
-                case 2:
-                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_3);
-                    break;
-                case 3:
-                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_4);
-                    break;
-            }
-
             final String probeName = po.get(position).getProbeName();
             final String timestamp = funfHelper.getDate(po.get(position).getTimestamp());
             holder.tv_name_single_app_up.setText(probeName);
@@ -278,6 +280,7 @@ public class Activity_xmind extends Activity {
 
             switch (probeName) {
                 case "Wifi_Status":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_1);
                     String wifiState = "";
                     switch (po.get(position).getWifitag()) {
                         case "0":
@@ -294,41 +297,51 @@ public class Activity_xmind extends Activity {
                     holder.tv_name_single_app_main.setText(Wifi_State);
                     break;
                 case "LocationProbe":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_2);
                     final String LocationProbe = po.get(position).getLatitude() + ", " + po.get(position).getLongitude();
                     holder.tv_name_single_app_main.setText(LocationProbe);
                     break;
                 case "BluetoothProbe":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_3);
                     final String BluetoothProbe = "RSSI : " + po.get(position).getRSSI();
                     holder.tv_name_single_app_main.setText(BluetoothProbe);
                     break;
                 case "ScreenProbe":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_4);
                     final String ScreenProbe = "isScreenOn : " + po.get(position).getIsScreenOn();
                     holder.tv_name_single_app_main.setText(ScreenProbe);
                     break;
                 case "Take_a_New_Photo_Event":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_5);
                     holder.tv_name_single_app_main.setText("");
                     break;
                 case "HardwareInfoProbe":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_6);
                     final String HardwareInfoProbe = po.get(position).getModel() + ", " + po.get(position).getDeviceId();
                     holder.tv_name_single_app_main.setText(HardwareInfoProbe);
                     break;
                 case "Current_ForeGround_Screen_Unlock_AppName":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_7);
                     final String Current_ForeGround_Screen_Unlock_AppName = "App : " + po.get(position).getPackageName();
                     holder.tv_name_single_app_main.setText(Current_ForeGround_Screen_Unlock_AppName);
                     break;
                 case "Current_ForeGround_Camera_AppName":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_7);
                     final String Current_ForeGround_Camera_AppName = "App : " + po.get(position).getPackageName();
                     holder.tv_name_single_app_main.setText(Current_ForeGround_Camera_AppName);
                     break;
                 case "Current_ForeGround_AppName":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_7);
                     final String Current_ForeGround_AppName = "App : " + po.get(position).getPackageName();
                     holder.tv_name_single_app_main.setText(Current_ForeGround_AppName);
                     break;
                 case "ServicesProbe":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_8);
                     final String ServicesProbe = "Service : " + po.get(position).getProcess();
                     holder.tv_name_single_app_main.setText(ServicesProbe);
                     break;
                 case "BatteryProbe":
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_9);
                     final String BatteryProbe = "Battery status : " + po.get(position).getBatteryLevel();
                     holder.tv_name_single_app_main.setText(BatteryProbe);
                     break;
@@ -345,20 +358,23 @@ public class Activity_xmind extends Activity {
         public ImageView iv_icon_single_app;
     }
 
-    public void removeAll() {
-        FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
-        SQLiteDatabase db = FDB_Helper.getWritableDatabase(); // helper is object extends SQLiteOpenHelper
-        db.delete(FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME, null, null);
-        db.close();
-
-        FunfDataBaseHelper FDB_Device_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_DEVICE);
-        SQLiteDatabase db_device = FDB_Device_Helper.getWritableDatabase(); // helper is object extends SQLiteOpenHelper
-        db_device.delete(FunfDataBaseHelper.XMIND_FUNF_DATABASE_DEVICE, null, null);
-        db_device.close();
+    /*
+    Delete all data in database
+     */
+    private void removeAll() {
+        deleteSingleDB(FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
+        deleteSingleDB(FunfDataBaseHelper.XMIND_FUNF_DATABASE_DEVICE);
 
         aq.id(R.id.timelimits_main_listview).getListView().setAdapter(null);
         aq.id(R.id.btn_clear_DB).enabled(false);
         aq.id(R.id.tv_db_count).text("No data currently.");
         Toast.makeText(mContext, "===Delete all data===", Toast.LENGTH_SHORT).show();
+    }
+
+    private void deleteSingleDB(String DBname) {
+        FunfDataBaseHelper FDB_Device_Helper = new FunfDataBaseHelper(mContext, DBname);
+        SQLiteDatabase db_device = FDB_Device_Helper.getWritableDatabase(); // helper is object extends SQLiteOpenHelper
+        db_device.delete(DBname, null, null);
+        db_device.close();
     }
 }

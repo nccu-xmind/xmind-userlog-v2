@@ -1,4 +1,4 @@
-package xmind.nccu.edu.xmind_funf.service;
+package xmind.nccu.edu.xmind_funf.Service;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -25,7 +25,7 @@ public class receiver extends BroadcastReceiver {
                 Intent intent_checkpoint = new Intent(context, xmind_service.class);
                 intent_checkpoint.setAction(xmind_service.CHECK_POINT);
                 context.startService(intent_checkpoint);
-            } else if (intent.getAction().equals("com.android.camera.NEW_PICTURE") || intent.getAction().equals("android.hardware.action.NEW_PICTURE")) {
+            } else if (intent.getAction().equals("android.hardware.action.NEW_PICTURE")) {//add 'com.android.camera.NEW_PICTURE'(Removed) if we need support android 3.x or previous version.
                 //Sometimes, Receiver get twice new_Picture Action at same times.
                 Log.v(TAG, "Just taking a picture, get action : " + intent.getAction().toString());
                 Intent intent_takepicture = new Intent(context, xmind_service.class);
