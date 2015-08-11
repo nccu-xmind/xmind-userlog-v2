@@ -19,18 +19,21 @@ import android.widget.Toast;
 
 import com.androidquery.AQuery;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 import xmind.nccu.edu.xmind_funf.NetworkService.UploadingHelper;
 import xmind.nccu.edu.xmind_funf.Service.xmind_service;
 import xmind.nccu.edu.xmind_funf.Util.FunfDataBaseHelper;
 import xmind.nccu.edu.xmind_funf.Util.ProbesObject;
+import xmind.nccu.edu.xmind_funf.Util.UploadUtil;
 import xmind.nccu.edu.xmind_funf.Util.funfHelper;
 
 /**
  * @author sid.ku
  * @version 1.2
- * @Edit Jul. 21, 2015
+ * @Edit Aug. 11, 2015
  * @since Jun. 15, 2015
  */
 public class Activity_xmind extends Activity {
@@ -79,9 +82,14 @@ public class Activity_xmind extends Activity {
                         aq.id(R.id.tv_db_count).visible();
                         showDataBastInListView();
 //                        printoutDB();
-                        Log.v("ssku", "Before sending data to lcoal server...");
-                        new UploadingHelper(mContext);
-                        Log.v("ssku", "After sending data to lcoal server...");
+                        //Testing-----------------------------------------------
+                        //move to service.
+//                        Log.v("ssku", "Before sending data to server...");
+//                        UploadingHelper task = new UploadingHelper(mContext);
+//                        task.setPostExecuteListener(PostListner_SendingDataTask);
+//                        task.execute("http://mobilesns.cs.nccu.edu.tw/xmind-backend/bupload.php");
+//                        Log.v("ssku", "After sending data to server...");
+                        //Testing End-------------------------------------------
                     } else {
                         aq.id(R.id.iv_iv_1).visible();
                         aq.id(R.id.tv_db_count).gone();
@@ -103,6 +111,25 @@ public class Activity_xmind extends Activity {
         }
     };
 
+    private UploadingHelper.PostExecuteListener PostListner_SendingDataTask = new UploadingHelper.PostExecuteListener() {
+        @Override
+        public void onPostExecute(String result) {
+            try {
+                JSONObject js = new JSONObject(result);
+                if (js.getString("state").toString().equals("true")) {
+                    Toast.makeText(mContext, "Uploading data success and clear database, total : " + js.getString("count").toString(), Toast.LENGTH_LONG).show();
+                    removeAll();
+                } else if (result.equals(UploadingHelper.STATUS_CODE_001)) {
+                    Toast.makeText(mContext, "No records currently.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(mContext, "Unknow status." + result, Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+
+            }
+        }
+    };
+
     /*
 
     for display data or record on UI, if service has been stoped.
@@ -115,12 +142,12 @@ public class Activity_xmind extends Activity {
         FunfDataBaseHelper FDB_Device_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_DEVICE);
         Cursor deviceCursor = FDB_Device_Helper.selectDeviceDB();
         if (deviceCursor.getCount() > 0) {
-            deviceCursor.moveToFirst();
+            deviceCursor.moveToLast();
             ProbesObject po = new ProbesObject();
             String type = deviceCursor.getString(1);
             po.setProbeName(type);
             po.setTimestamp(deviceCursor.getString(2));
-            if (type.equals("HardwareInfoProbe")) {
+            if (type.equals(UploadUtil.HARDWARE_INFO_PROBE)) {
                 po.setModel(deviceCursor.getString(3));
                 po.setDeviceId(deviceCursor.getString(4));
                 aq.id(R.id.tv_device_info).text("Model - " + deviceCursor.getString(3) + ", ID : " + deviceCursor.getString(4));
@@ -141,39 +168,35 @@ public class Activity_xmind extends Activity {
                 po.setProbeName(type);
                 po.setTimestamp(cursor.getString(2));
                 switch (type) {
-                    case "Wifi_Status":
+                    case UploadUtil.WIFI_STATUS_PROBE:
                         po.setWifitag(cursor.getString(10));
                         po.setMobileData(cursor.getString(11));
                         break;
-                    case "LocationProbe":
+                    case UploadUtil.LOCATION_PROBE:
                         po.setLatitude(cursor.getString(5));
                         po.setLongitude(cursor.getString(6));
                         break;
-                    case "BluetoothProbe":
+                    case UploadUtil.BLUETOOTH_PROBE:
                         po.setRSSI(cursor.getString(7));
                         break;
-                    case "ScreenProbe":
+                    case UploadUtil.SCREEN_PROBE:
                         po.setIsScreenOn(cursor.getString(8));
                         break;
-                    case "Take_a_New_Photo_Event":
+                    case UploadUtil.TAKE_A_NEW_PHOTO_EVENT:
                         break;
-                    case "HardwareInfoProbe":
-                        po.setProbeName(cursor.getString(1));
-                        po.setTimestamp(cursor.getString(2));
-                        break;
-                    case "Current_ForeGround_Screen_Unlock_AppName":
+                    case UploadUtil.CURRENT_APP_UNLOCK:
                         po.setPackageName(cursor.getString(9));
                         break;
-                    case "Current_ForeGround_Camera_AppName":
+                    case UploadUtil.CURRENT_APP_CAMERA:
                         po.setPackageName(cursor.getString(9));
                         break;
-                    case "Current_ForeGround_AppName":
+                    case UploadUtil.CURRENT_APP:
                         po.setPackageName(cursor.getString(9));
                         break;
-                    case "ServicesProbe":
+                    case UploadUtil.SERVICE_PROBE:
                         po.setProcess(cursor.getString(4));
                         break;
-                    case "BatteryProbe":
+                    case UploadUtil.BATTERY_PROBE:
                         po.setBatteryLevel(cursor.getString(3));
                         break;
                 }
@@ -279,7 +302,7 @@ public class Activity_xmind extends Activity {
 
 
             switch (probeName) {
-                case "Wifi_Status":
+                case UploadUtil.WIFI_STATUS_PROBE:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_1);
                     String wifiState = "";
                     switch (po.get(position).getWifitag()) {
@@ -296,51 +319,51 @@ public class Activity_xmind extends Activity {
                     final String Wifi_State = wifiState;
                     holder.tv_name_single_app_main.setText(Wifi_State);
                     break;
-                case "LocationProbe":
+                case UploadUtil.LOCATION_PROBE:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_2);
                     final String LocationProbe = po.get(position).getLatitude() + ", " + po.get(position).getLongitude();
                     holder.tv_name_single_app_main.setText(LocationProbe);
                     break;
-                case "BluetoothProbe":
+                case UploadUtil.BLUETOOTH_PROBE:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_3);
                     final String BluetoothProbe = "RSSI : " + po.get(position).getRSSI();
                     holder.tv_name_single_app_main.setText(BluetoothProbe);
                     break;
-                case "ScreenProbe":
+                case UploadUtil.SCREEN_PROBE:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_4);
                     final String ScreenProbe = "isScreenOn : " + po.get(position).getIsScreenOn();
                     holder.tv_name_single_app_main.setText(ScreenProbe);
                     break;
-                case "Take_a_New_Photo_Event":
+                case UploadUtil.TAKE_A_NEW_PHOTO_EVENT:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_5);
                     holder.tv_name_single_app_main.setText("");
                     break;
-                case "HardwareInfoProbe":
+                case UploadUtil.HARDWARE_INFO_PROBE:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_6);
                     final String HardwareInfoProbe = po.get(position).getModel() + ", " + po.get(position).getDeviceId();
                     holder.tv_name_single_app_main.setText(HardwareInfoProbe);
                     break;
-                case "Current_ForeGround_Screen_Unlock_AppName":
+                case UploadUtil.CURRENT_APP_UNLOCK:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_7);
                     final String Current_ForeGround_Screen_Unlock_AppName = "App : " + po.get(position).getPackageName();
                     holder.tv_name_single_app_main.setText(Current_ForeGround_Screen_Unlock_AppName);
                     break;
-                case "Current_ForeGround_Camera_AppName":
+                case UploadUtil.CURRENT_APP_CAMERA:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_7);
                     final String Current_ForeGround_Camera_AppName = "App : " + po.get(position).getPackageName();
                     holder.tv_name_single_app_main.setText(Current_ForeGround_Camera_AppName);
                     break;
-                case "Current_ForeGround_AppName":
+                case UploadUtil.CURRENT_APP:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_7);
                     final String Current_ForeGround_AppName = "App : " + po.get(position).getPackageName();
                     holder.tv_name_single_app_main.setText(Current_ForeGround_AppName);
                     break;
-                case "ServicesProbe":
+                case UploadUtil.SERVICE_PROBE:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_8);
                     final String ServicesProbe = "Service : " + po.get(position).getProcess();
                     holder.tv_name_single_app_main.setText(ServicesProbe);
                     break;
-                case "BatteryProbe":
+                case UploadUtil.BATTERY_PROBE:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_9);
                     final String BatteryProbe = "Battery status : " + po.get(position).getBatteryLevel();
                     holder.tv_name_single_app_main.setText(BatteryProbe);

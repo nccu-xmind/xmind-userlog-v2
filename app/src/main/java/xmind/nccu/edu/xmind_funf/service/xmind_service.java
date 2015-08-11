@@ -10,7 +10,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -18,11 +20,14 @@ import android.os.FileObserver;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.androidquery.AQuery;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -43,7 +48,9 @@ import edu.mit.media.funf.probe.builtin.ServicesProbe;
 import edu.mit.media.funf.probe.builtin.TemperatureSensorProbe;
 import edu.mit.media.funf.storage.NameValueDatabaseHelper;
 import xmind.nccu.edu.xmind_funf.GetCurrentRunningApp;
+import xmind.nccu.edu.xmind_funf.NetworkService.UploadingHelper;
 import xmind.nccu.edu.xmind_funf.Util.FunfDataBaseHelper;
+import xmind.nccu.edu.xmind_funf.Util.UploadUtil;
 
 /**
  * Created by sid.ku on 6/22/15.
@@ -54,6 +61,7 @@ public class xmind_service extends Service implements Probe.DataListener {
     private AQuery aq;
     public static final String PIPELINE_NAME = "xmind_service";
     public static final String CHECK_POINT = "xmind_regular_check_point";
+    public static final String UPLOADING_REMINDER = "xmind_upload_data_reminder";
     public static final String TAKE_PICTURE = "xmind_action_take_picture";
     public static final String FIRST_TIME_START_SERVICE = "xmind_FIRST_TIME_START_SERVICE";
     private FunfManager funfManager;
@@ -78,7 +86,8 @@ public class xmind_service extends Service implements Probe.DataListener {
     private boolean isScreenOn = true;
 
     private AlarmManager alarmManager;
-    private PendingIntent pendingIntent;
+    private PendingIntent pendingIntent_CheckPoint;
+    private PendingIntent pendingIntent_uploading;
 
     private NameValueDatabaseHelper mNameValueDatabaseHelper;
 
@@ -117,7 +126,8 @@ public class xmind_service extends Service implements Probe.DataListener {
 
             hardwareInfoProbe.unregisterListener(xmind_service.this);
 
-            alarmManager.cancel(pendingIntent);//Cancel timer
+            alarmManager.cancel(pendingIntent_CheckPoint);//Cancel timer
+            alarmManager.cancel(pendingIntent_uploading);//Cancel timer
             unbindService(funfManagerConn);
         }
 
@@ -200,13 +210,25 @@ public class xmind_service extends Service implements Probe.DataListener {
                 getBatteryStatus();
                 getServiceStatus();
 
-
                 if (isScreenOn) {
                     GetCurrentRunningApp gcra = new GetCurrentRunningApp(mContext);
                     FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
                     FDB_Helper.addCurrentForegroundAppRecord(FunfDataBaseHelper.CURRENT_FOREGROUND_APP, String.valueOf(System.currentTimeMillis()), gcra.getCurrentAppName());
                     FDB_Helper.close();
                 }
+            } else if (intent != null && intent.getAction().equals(UPLOADING_REMINDER)) {
+                Log.v(TAG, "Get action for remind uploading.");
+                ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+                if (mWifi.isConnected()) {
+                    //Testing-----------------------------------------------
+                    UploadingHelper task = new UploadingHelper(mContext);
+                    task.setPostExecuteListener(PostListner_SendingDataTask);
+                    task.execute("http://mobilesns.cs.nccu.edu.tw/xmind-backend/bupload.php");
+                    //Testing End-------------------------------------------
+                }else
+                    Log.v(TAG, "Wifi is disconnected currently.");
             } else if (intent != null && intent.getAction().equals(TAKE_PICTURE)) {
                 //using file observer to get photo event, NEW_PICTURE action is useless currently.
                 FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
@@ -221,6 +243,43 @@ public class xmind_service extends Service implements Probe.DataListener {
         setFileObserverStatus();//Stop watching folder if 'isNewPictureByReceiver' is true, otherwise, start watching.
 
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    private UploadingHelper.PostExecuteListener PostListner_SendingDataTask = new UploadingHelper.PostExecuteListener() {
+        @Override
+        public void onPostExecute(String result) {
+            try {
+                JSONObject js = new JSONObject(result);
+                if (js.getString("state").toString().equals("true")) {
+                    Log.v(TAG, "Automatically uploading data succeed.");
+                    Toast.makeText(mContext, "Uploading data success and clear database, total : " + js.getString("count").toString(), Toast.LENGTH_LONG).show();
+                    removeAll();
+                } else if (result.equals(UploadingHelper.STATUS_CODE_001)) {
+                    Log.v(TAG, "Automatically uploading failed, since no data.");
+                    Toast.makeText(mContext, "No records currently.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.v(TAG, "Automatically uploading failed, since unknow reason.");
+                    Toast.makeText(mContext, "Unknow status." + result, Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+
+            }
+        }
+    };
+
+    /*
+    Delete all data in database
+     */
+    private void removeAll() {
+        deleteSingleDB(FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
+        Log.v(TAG, "Remove all data from database...");
+    }
+
+    private void deleteSingleDB(String DBname) {
+        FunfDataBaseHelper FDB_Device_Helper = new FunfDataBaseHelper(mContext, DBname);
+        SQLiteDatabase db_device = FDB_Device_Helper.getWritableDatabase(); // helper is object extends SQLiteOpenHelper
+        db_device.delete(DBname, null, null);
+        db_device.close();
     }
 
     /*
@@ -296,14 +355,25 @@ public class xmind_service extends Service implements Probe.DataListener {
     private void setServiceCalendar() {
         Intent myIntent = new Intent(mContext, receiver.class);
         myIntent.setAction(CHECK_POINT);
-        pendingIntent = PendingIntent.getBroadcast(mContext, 0, myIntent, 0);
+        pendingIntent_CheckPoint = PendingIntent.getBroadcast(mContext, 0, myIntent, 0);
 
         alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.add(Calendar.SECOND, 60);
         long frequency = 60 * 1000;
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent_CheckPoint);
+
+
+        Intent UploadingIntent = new Intent(mContext, receiver.class);
+        UploadingIntent.setAction(UPLOADING_REMINDER);
+        pendingIntent_uploading = PendingIntent.getBroadcast(mContext, 0, UploadingIntent, 0);
+
+        Calendar UploadingCalendar = Calendar.getInstance();
+        UploadingCalendar.setTimeInMillis(System.currentTimeMillis());
+        UploadingCalendar.add(Calendar.SECOND, 60);
+        long uploadingFrequency = 2 * 60 * 1000;
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, UploadingCalendar.getTimeInMillis(), uploadingFrequency, pendingIntent_uploading);
     }
 
     /*
@@ -324,6 +394,7 @@ public class xmind_service extends Service implements Probe.DataListener {
 
             bluetoothProbe.registerPassiveListener(xmind_service.this);
             callLogProbe.registerPassiveListener(xmind_service.this);
+//            callLogProbe.registerListener(xmind_service.this);//TODO testing this listener again.
             locationProbe.registerPassiveListener(xmind_service.this);
 
             runningApplicationsProbe.registerListener(runningAppListener);
@@ -355,23 +426,25 @@ public class xmind_service extends Service implements Probe.DataListener {
 
         FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         switch (getType(iJsonObject.get("@type").toString())) {
-            case "HardwareInfoProbe"://TODO Only record once.
+            case UploadUtil.HARDWARE_INFO_PROBE://TODO Only record once.
                 FunfDataBaseHelper FDB_Helper_Device = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_DEVICE);
-                FDB_Helper_Device.addHardwareInfo(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("model").toString(), iJsonObject1.get("deviceId").toString());
+                String Model = iJsonObject1.get("model").toString().replaceAll("[^a-zA-Z0-9]+", "");
+                String DeviceID = iJsonObject1.get("deviceId").toString().replaceAll("[^a-zA-Z0-9]+", "");
+                FDB_Helper_Device.addHardwareInfo(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis()), Model, DeviceID);
                 FDB_Helper_Device.close();
                 break;
-            case "BatteryProbe":
-                FDB_Helper.addBatteryRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("level").toString());
+            case UploadUtil.BATTERY_PROBE:
+                FDB_Helper.addBatteryRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis()), iJsonObject1.get("level").toString());
                 break;
-            case "BluetoothProbe":
-                FDB_Helper.addBluetoothRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("android.bluetooth.device.extra.RSSI").toString());
+            case UploadUtil.BLUETOOTH_PROBE:
+                FDB_Helper.addBluetoothRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis()), iJsonObject1.get("android.bluetooth.device.extra.RSSI").toString());
                 break;
-            case "ServicesProbe":
-                //TODO Hide this probe temporary since it's too annoying...
-//                FDB_Helper.addServiceRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("process").toString());
+            case UploadUtil.SERVICE_PROBE:
+                String process = iJsonObject1.get("process").toString().replaceAll("[^a-zA-Z0-9]+", "");
+                FDB_Helper.addServiceRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis()), process);
                 break;
-            case "ScreenProbe":
-                FDB_Helper.addScreenRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("screenOn").toString());
+            case UploadUtil.SCREEN_PROBE:
+                FDB_Helper.addScreenRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis()), iJsonObject1.get("screenOn").toString());
 
                 if (iJsonObject1.get("screenOn").toString().equals("true")) {
                     isScreenOn = true;//Only record it on screen on.
@@ -389,7 +462,7 @@ public class xmind_service extends Service implements Probe.DataListener {
                     isScreenOn = false;
 
                 break;
-            case "LocationProbe":
+            case UploadUtil.LOCATION_PROBE:
                 FDB_Helper.addLocationRecord(getType(iJsonObject.get("@type").toString()), String.valueOf(System.currentTimeMillis())/*iJsonObject1.get("timestamp").toString()*/, iJsonObject1.get("mLatitude").toString(), iJsonObject1.get("mLongitude").toString());
                 break;
         }

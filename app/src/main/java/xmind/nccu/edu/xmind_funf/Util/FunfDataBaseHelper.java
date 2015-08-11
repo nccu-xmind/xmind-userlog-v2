@@ -186,4 +186,13 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         Cursor cursor = db.query(XMIND_FUNF_DATABASE_DEVICE, new String[]{"_id", "name", "timestamp", "model", "deviceId"}, null, null, null, null, null);
         return cursor;
     }
+
+    //TODO not testing yet.
+    public void deleteFirstNRows(){
+        String ALTER_TBL ="delete from " + XMIND_FUNF_DATABASE_NAME +
+                " where * in (select * from "+ XMIND_FUNF_DATABASE_NAME+" order by _id LIMIT 3);";
+
+//        String ALTER_TBL ="delete from " + MYDATABASE_TABLE +
+//                " where "+KEY_ID+" in (select "+ KEY_ID +" from "+ MYDATABASE_TABLE+" order by _id LIMIT 3);";
+    }
 }

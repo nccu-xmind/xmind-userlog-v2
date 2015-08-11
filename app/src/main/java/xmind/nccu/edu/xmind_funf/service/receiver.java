@@ -25,7 +25,12 @@ public class receiver extends BroadcastReceiver {
                 Intent intent_checkpoint = new Intent(context, xmind_service.class);
                 intent_checkpoint.setAction(xmind_service.CHECK_POINT);
                 context.startService(intent_checkpoint);
-            } else if (intent.getAction().equals("android.hardware.action.NEW_PICTURE")) {//add 'com.android.camera.NEW_PICTURE'(Removed) if we need support android 3.x or previous version.
+            } else if (intent.getAction().equals(xmind_service.UPLOADING_REMINDER)) {
+                Log.v(TAG, "@Receiver, UPLOADING_REMINDER.");
+                Intent intent_Upload_Reminder = new Intent(context, xmind_service.class);
+                intent_Upload_Reminder.setAction(xmind_service.UPLOADING_REMINDER);
+                context.startService(intent_Upload_Reminder);
+            }else if (intent.getAction().equals("android.hardware.action.NEW_PICTURE")) {//add 'com.android.camera.NEW_PICTURE'(Removed) if we need support android 3.x or previous version.
                 //Sometimes, Receiver get twice new_Picture Action at same times.
                 Log.v(TAG, "Just taking a picture, get action : " + intent.getAction().toString());
                 Intent intent_takepicture = new Intent(context, xmind_service.class);
