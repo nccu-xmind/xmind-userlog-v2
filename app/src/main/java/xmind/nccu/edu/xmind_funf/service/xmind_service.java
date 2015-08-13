@@ -393,8 +393,8 @@ public class xmind_service extends Service implements Probe.DataListener {
             pipeline = (BasicPipeline) funfManager.getRegisteredPipeline(PIPELINE_NAME);
 
             bluetoothProbe.registerPassiveListener(xmind_service.this);
-            callLogProbe.registerPassiveListener(xmind_service.this);
-//            callLogProbe.registerListener(xmind_service.this);//TODO testing this listener again.
+//            callLogProbe.registerPassiveListener(xmind_service.this);
+            callLogProbe.registerListener(xmind_service.this);//TODO testing this listener again.
             locationProbe.registerPassiveListener(xmind_service.this);
 
             runningApplicationsProbe.registerListener(runningAppListener);
@@ -422,7 +422,7 @@ public class xmind_service extends Service implements Probe.DataListener {
 
     @Override
     public void onDataReceived(IJsonObject iJsonObject, IJsonObject iJsonObject1) {
-//        Log.i(TAG, "(3)Get event : " + getType(iJsonObject.get("@type").toString()) + ", data : " + iJsonObject1.toString());
+        Log.i(TAG, "(3)Get event : " + getType(iJsonObject.get("@type").toString()) + ", data : " + iJsonObject1.toString());
 
         FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         switch (getType(iJsonObject.get("@type").toString())) {
