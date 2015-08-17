@@ -58,7 +58,7 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
             deviceID = al_device.get(1);
         }
         UploadingTimestamp = String.valueOf(System.currentTimeMillis());
-        Log.v(TAG, "E-mail : " + primaryEMail + ", Device Model" + deviceModel + ", Device ID : " + deviceID + ", Current timestamp : " + UploadingTimestamp);
+//        Log.v(TAG, "E-mail : " + primaryEMail + ", Device Model" + deviceModel + ", Device ID : " + deviceID + ", Current timestamp : " + UploadingTimestamp);
     }
 
     private ArrayList<String> getDevice() {
