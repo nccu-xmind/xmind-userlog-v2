@@ -15,10 +15,10 @@ public class UploadUtil {
     public static final String SCREEN_PROBE = "ScreenProbe";
     public static final String SERVICE_PROBE = "ServicesProbe";
     public static final String BATTERY_PROBE = "BatteryProbe";
+    public static final String CALLLOG_PROBE = "CallLogProbe";
+    //TODO
+    //ProbeType，TriggeredTimestamp，Duration, Date
     public static final String TAKE_A_NEW_PHOTO_EVENT = "Take_a_New_Photo_Event";
-    public static final String CURRENT_APP_UNLOCK = "Current_Foreground_Screen_Unlock_AppName";
-    public static final String CURRENT_APP_CAMERA = "Current_Foreground_Camera_AppName";
-    public static final String CURRENT_APP = "Current_Foreground_AppName";
 
     public static final String OBJ_MAIL = "UserID";
     public static final String OBJ_MODEL = "Model";
@@ -34,6 +34,8 @@ public class UploadUtil {
     public static final String OBJ_PACKAGENAME = "PackageName";
     public static final String OBJ_PROCESS = "Process";
     public static final String OBJ_BATTERY = "BatteryLevel";
+    public static final String OBJ_DURATION = "Duration";
+    public static final String OBJ_DATE = "Date";
     public static final String PROBE_ARRAY = "ProbeArray";
 
     public static String getDeviceEmail(Context context) {

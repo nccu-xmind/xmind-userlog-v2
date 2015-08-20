@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,12 +20,10 @@ import android.widget.Toast;
 
 import com.androidquery.AQuery;
 
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 
-import xmind.nccu.edu.xmind_funf.NetworkService.UploadingHelper;
-import xmind.nccu.edu.xmind_funf.Service.xmind_service;
+import xmind.nccu.edu.xmind_funf.Service.WindowChangeDetectingService;
+import xmind.nccu.edu.xmind_funf.Service.XmindService;
 import xmind.nccu.edu.xmind_funf.Util.FunfDataBaseHelper;
 import xmind.nccu.edu.xmind_funf.Util.ProbesObject;
 import xmind.nccu.edu.xmind_funf.Util.UploadUtil;
@@ -61,10 +60,19 @@ public class Activity_xmind extends Activity {
         aq.id(R.id.iv_iv_1).background(R.drawable.gedetama2);
         aq.id(R.id.btn_clear_DB).enabled(false);
 
-        Intent intent_initService = new Intent(mContext, xmind_service.class);
-        intent_initService.setAction(xmind_service.FIRST_TIME_START_SERVICE);
+        Intent intent_initService = new Intent(mContext, XmindService.class);
+        intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
 
         mContext.startService(intent_initService);
+
+        if(Build.VERSION.SDK_INT > 21){//detect foreground
+//            Log.v(TAG, "Starting a testing service...");
+//            Intent intent_lollipopService = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+//            startActivityForResult(intent_lollipopService, 0);
+            Intent intent_lollipopService = new Intent(mContext, WindowChangeDetectingService.class);
+            mContext.startService(intent_lollipopService);
+        }
+
         isServiceStart = true;
         updatePipelineStatus();
 
@@ -77,26 +85,19 @@ public class Activity_xmind extends Activity {
             switch (v.getId()) {
                 case R.id.btn_pipeline_controller:
                     if (isServiceStart) {
-                        mContext.stopService(new Intent(mContext, xmind_service.class));
+                        mContext.stopService(new Intent(mContext, XmindService.class));
+                        mContext.stopService(new Intent(mContext, WindowChangeDetectingService.class));
                         isServiceStart = false;
                         aq.id(R.id.tv_db_count).visible();
                         showDataBastInListView();
 //                        printoutDB();
-                        //Testing-----------------------------------------------
-                        //move to service.
-//                        Log.v("ssku", "Before sending data to server...");
-//                        UploadingHelper task = new UploadingHelper(mContext);
-//                        task.setPostExecuteListener(PostListner_SendingDataTask);
-//                        task.execute("http://mobilesns.cs.nccu.edu.tw/xmind-backend/bupload.php");
-//                        Log.v("ssku", "After sending data to server...");
-                        //Testing End-------------------------------------------
                     } else {
                         aq.id(R.id.iv_iv_1).visible();
                         aq.id(R.id.tv_db_count).gone();
                         aq.id(R.id.timelimits_main_listview).gone();
                         aq.id(R.id.btn_clear_DB).enabled(false);
-                        Intent intent_initService = new Intent(mContext, xmind_service.class);
-                        intent_initService.setAction(xmind_service.FIRST_TIME_START_SERVICE);
+                        Intent intent_initService = new Intent(mContext, XmindService.class);
+                        intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
 
                         mContext.startService(intent_initService);
                         isServiceStart = true;
@@ -111,25 +112,6 @@ public class Activity_xmind extends Activity {
         }
     };
 
-    private UploadingHelper.PostExecuteListener PostListner_SendingDataTask = new UploadingHelper.PostExecuteListener() {
-        @Override
-        public void onPostExecute(String result) {
-            try {
-                JSONObject js = new JSONObject(result);
-                if (js.getString("state").toString().equals("true")) {
-                    Toast.makeText(mContext, "Uploading data success and clear database, total : " + js.getString("count").toString(), Toast.LENGTH_LONG).show();
-                    removeAll();
-                } else if (result.equals(UploadingHelper.STATUS_CODE_001)) {
-                    Toast.makeText(mContext, "No records currently.", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(mContext, "Unknow status." + result, Toast.LENGTH_SHORT).show();
-                }
-            } catch (Exception e) {
-
-            }
-        }
-    };
-
     /*
 
     for display data or record on UI, if service has been stoped.
@@ -138,7 +120,7 @@ public class Activity_xmind extends Activity {
         aq.id(R.id.iv_iv_1).gone();
         aq.id(R.id.timelimits_main_listview).visible();
         //Show DataBase if service is suspends.
-        ArrayList<ProbesObject> al_ProbesObjects = new ArrayList<ProbesObject>();
+        ArrayList<ProbesObject> al_ProbesObjects = new ArrayList<>();
         FunfDataBaseHelper FDB_Device_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_DEVICE);
         Cursor deviceCursor = FDB_Device_Helper.selectDeviceDB();
         if (deviceCursor.getCount() > 0) {
@@ -184,13 +166,13 @@ public class Activity_xmind extends Activity {
                         break;
                     case UploadUtil.TAKE_A_NEW_PHOTO_EVENT:
                         break;
-                    case UploadUtil.CURRENT_APP_UNLOCK:
+                    case FunfDataBaseHelper.CURRENT_FOREGROUND_APP_AFTER_SCREEN_UNLOCK:
                         po.setPackageName(cursor.getString(9));
                         break;
-                    case UploadUtil.CURRENT_APP_CAMERA:
+                    case FunfDataBaseHelper.CURRENT_FOREGROUND_APP_ON_NEW_PICUTR:
                         po.setPackageName(cursor.getString(9));
                         break;
-                    case UploadUtil.CURRENT_APP:
+                    case FunfDataBaseHelper.CURRENT_FOREGROUND_APP:
                         po.setPackageName(cursor.getString(9));
                         break;
                     case UploadUtil.SERVICE_PROBE:
@@ -198,6 +180,10 @@ public class Activity_xmind extends Activity {
                         break;
                     case UploadUtil.BATTERY_PROBE:
                         po.setBatteryLevel(cursor.getString(3));
+                        break;
+                    case UploadUtil.CALLLOG_PROBE:
+                        po.setDuration(cursor.getString(12));
+                        po.setCallDate(cursor.getString(13));
                         break;
                 }
                 al_ProbesObjects.add(po);
@@ -343,17 +329,17 @@ public class Activity_xmind extends Activity {
                     final String HardwareInfoProbe = po.get(position).getModel() + ", " + po.get(position).getDeviceId();
                     holder.tv_name_single_app_main.setText(HardwareInfoProbe);
                     break;
-                case UploadUtil.CURRENT_APP_UNLOCK:
+                case FunfDataBaseHelper.CURRENT_FOREGROUND_APP_AFTER_SCREEN_UNLOCK:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_7);
                     final String Current_ForeGround_Screen_Unlock_AppName = "App : " + po.get(position).getPackageName();
                     holder.tv_name_single_app_main.setText(Current_ForeGround_Screen_Unlock_AppName);
                     break;
-                case UploadUtil.CURRENT_APP_CAMERA:
+                case FunfDataBaseHelper.CURRENT_FOREGROUND_APP_ON_NEW_PICUTR:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_7);
                     final String Current_ForeGround_Camera_AppName = "App : " + po.get(position).getPackageName();
                     holder.tv_name_single_app_main.setText(Current_ForeGround_Camera_AppName);
                     break;
-                case UploadUtil.CURRENT_APP:
+                case FunfDataBaseHelper.CURRENT_FOREGROUND_APP:
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_7);
                     final String Current_ForeGround_AppName = "App : " + po.get(position).getPackageName();
                     holder.tv_name_single_app_main.setText(Current_ForeGround_AppName);
@@ -367,6 +353,11 @@ public class Activity_xmind extends Activity {
                     holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_9);
                     final String BatteryProbe = "Battery status : " + po.get(position).getBatteryLevel();
                     holder.tv_name_single_app_main.setText(BatteryProbe);
+                    break;
+                case UploadUtil.CALLLOG_PROBE:
+                    holder.iv_icon_single_app.setImageResource(R.drawable.gadatama_9);
+                    final String CallLog = "Duration : " + po.get(position).getDuration() + ", Date : " + po.get(position).getCallDate();
+                    holder.tv_name_single_app_main.setText(CallLog);
                     break;
             }
 

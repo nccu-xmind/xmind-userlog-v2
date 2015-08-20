@@ -19,17 +19,19 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
     public static final String XMIND_FUNF_DATABASE_DEVICE = "Device_info";
     public static final int CURRENT_VERSION = 1;
     public static final NameValueDatabaseHelper.Table DATA_TABLE = new NameValueDatabaseHelper.Table(XMIND_FUNF_DATABASE_NAME, Arrays.asList(
-            new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("name", "TEXT"),
-                    new NameValueDatabaseHelper.Column("timestamp", "TEXT"),
-                    new NameValueDatabaseHelper.Column("batteryLevel", "FLOAT"),
-                    new NameValueDatabaseHelper.Column("process", "TEXT"),
-                    new NameValueDatabaseHelper.Column("latitude", "FLOAT"),
-                    new NameValueDatabaseHelper.Column("longitude", "FLOAT"),
-                    new NameValueDatabaseHelper.Column("rssi", "FLOAT"),
-                    new NameValueDatabaseHelper.Column("isScreenOn", "TEXT"),
-                    new NameValueDatabaseHelper.Column("packageName", "TEXT"),
-                    new NameValueDatabaseHelper.Column("wifitag", "TEXT"),
-                    new NameValueDatabaseHelper.Column("mobiletag", "TEXT")}));
+            new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("name", "TEXT"),//1
+                    new NameValueDatabaseHelper.Column("timestamp", "TEXT"),//2
+                    new NameValueDatabaseHelper.Column("batteryLevel", "FLOAT"),//3
+                    new NameValueDatabaseHelper.Column("process", "TEXT"),//4
+                    new NameValueDatabaseHelper.Column("latitude", "FLOAT"),//5
+                    new NameValueDatabaseHelper.Column("longitude", "FLOAT"),//6
+                    new NameValueDatabaseHelper.Column("rssi", "FLOAT"),//7
+                    new NameValueDatabaseHelper.Column("isScreenOn", "TEXT"),//8
+                    new NameValueDatabaseHelper.Column("packageName", "TEXT"),//9
+                    new NameValueDatabaseHelper.Column("wifitag", "TEXT"),//10
+                    new NameValueDatabaseHelper.Column("mobiletag", "TEXT"),//11
+                    new NameValueDatabaseHelper.Column("duration", "FLOAT"),//12
+                    new NameValueDatabaseHelper.Column("date", "TEXT")}));//13
     public static final String COLUMN_DATABASE_NAME = "dbname";
     public static final NameValueDatabaseHelper.Table FILE_INFO_TABLE = new NameValueDatabaseHelper.Table(XMIND_FUNF_DATABASE_DEVICE, Arrays.asList(
             new NameValueDatabaseHelper.Column[]{new NameValueDatabaseHelper.Column("name", "TEXT"),
@@ -40,7 +42,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
     //Columns name
     public static final String CURRENT_FOREGROUND_APP = "Current_ForeGround_AppName";
     public static final String CURRENT_FOREGROUND_APP_ON_NEW_PICUTR = "Current_ForeGround_Camera_AppName";
-    public static final String CURRENT_FOREGROUND_APP_AFTER_SCREEN_UNLICK = "Current_ForeGround_Screen_Unlock_AppName";
+    public static final String CURRENT_FOREGROUND_APP_AFTER_SCREEN_UNLOCK = "Current_ForeGround_Screen_Unlock_AppName";
     public static final String TAKE_A_NEW_PHOTO_EVENT = "Take_a_New_Photo_Event";
 
     //TAG
@@ -164,6 +166,17 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         return row;
     }
 
+    public long addCallLogRecord(String name, String timestamp, int duration, String date) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("name", name);
+        cv.put("timestamp", timestamp);
+        cv.put("duration", duration);
+        cv.put("date", date);
+        long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
+        return row;
+    }
+
     public long addHardwareInfo(String name, String timestamp, String model, String deviceId) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -177,7 +190,7 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
 
     public Cursor selectDB() {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query(XMIND_FUNF_DATABASE_NAME, new String[]{"_id", "name", "timestamp", "batteryLevel", "process", "latitude", "longitude", "rssi", "isScreenOn", "packageName", "wifitag", "mobiletag"}, null, null, null, null, null);
+        Cursor cursor = db.query(XMIND_FUNF_DATABASE_NAME, new String[]{"_id", "name", "timestamp", "batteryLevel", "process", "latitude", "longitude", "rssi", "isScreenOn", "packageName", "wifitag", "mobiletag", "duration", "date"}, null, null, null, null, null);
         return cursor;
     }
 

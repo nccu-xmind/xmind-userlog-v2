@@ -20,6 +20,8 @@ public class ProbesObject implements Serializable {
     private String mobileData = "";
     private String model = "";
     private String deviceId = "";
+    private String duration = "";
+    private String callDate = "";
 
     public ProbesObject(){}
 
@@ -112,6 +114,20 @@ public class ProbesObject implements Serializable {
     }
     public String getDeviceId(){
         return deviceId;
+    }
+
+    public void setDuration(String duration){
+        this.duration = duration;
+    }
+    public String getDuration(){
+        return duration;
+    }
+
+    public void setCallDate(String callDate){
+        this.callDate = callDate;
+    }
+    public String getCallDate(){
+        return callDate;
     }
 
 }

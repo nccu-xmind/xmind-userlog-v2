@@ -76,7 +76,7 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
 
     @Override
     protected void onPreExecute() {
-        Log.i(TAG, "Prepare sending the data to server...");
+//        Log.i(TAG, "Prepare sending the data to server...");
     }
 
     @Override
@@ -131,15 +131,15 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
                             case UploadUtil.SCREEN_PROBE:
                                 jsonProbeChild.put(UploadUtil.OBJ_SCREEN, dataCursor.getString(8));
                                 break;
-                            case UploadUtil.TAKE_A_NEW_PHOTO_EVENT:
-                                break;
-                            case UploadUtil.CURRENT_APP_UNLOCK:
+//                            case UploadUtil.TAKE_A_NEW_PHOTO_EVENT:
+//                                break;
+                            case FunfDataBaseHelper.CURRENT_FOREGROUND_APP_AFTER_SCREEN_UNLOCK:
                                 jsonProbeChild.put(UploadUtil.OBJ_PACKAGENAME, dataCursor.getString(9));
                                 break;
-                            case UploadUtil.CURRENT_APP_CAMERA:
+                            case FunfDataBaseHelper.CURRENT_FOREGROUND_APP_ON_NEW_PICUTR:
                                 jsonProbeChild.put(UploadUtil.OBJ_PACKAGENAME, dataCursor.getString(9));
                                 break;
-                            case UploadUtil.CURRENT_APP:
+                            case FunfDataBaseHelper.CURRENT_FOREGROUND_APP:
                                 jsonProbeChild.put(UploadUtil.OBJ_PACKAGENAME, dataCursor.getString(9));
                                 break;
                             case UploadUtil.SERVICE_PROBE:
@@ -147,6 +147,10 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
                                 break;
                             case UploadUtil.BATTERY_PROBE:
                                 jsonProbeChild.put(UploadUtil.OBJ_BATTERY, dataCursor.getString(3));
+                                break;
+                            case UploadUtil.CALLLOG_PROBE:
+                                jsonProbeChild.put(UploadUtil.OBJ_DURATION, dataCursor.getString(12));
+                                jsonProbeChild.put(UploadUtil.OBJ_DATE, dataCursor.getString(13));
                                 break;
                         }
                         jasonProbeArray.put(jsonProbeChild);
