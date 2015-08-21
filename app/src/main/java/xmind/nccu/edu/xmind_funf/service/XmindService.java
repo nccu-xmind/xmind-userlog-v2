@@ -92,6 +92,7 @@ public class XmindService extends Service implements Probe.DataListener {
     private AlarmManager alarmManager;
     private PendingIntent pendingIntent_CheckPoint;
     private PendingIntent pendingIntent_uploading;
+    private PendingIntent pendingIntent_calllog;
 
     private NameValueDatabaseHelper mNameValueDatabaseHelper;
 
@@ -121,7 +122,7 @@ public class XmindService extends Service implements Probe.DataListener {
 
 //            wifiProbe.unregisterListener(XmindService.this);
             bluetoothProbe.unregisterListener(XmindService.this);
-            callLogProbe.unregisterListener(XmindService.this);
+//            callLogProbe.unregisterListener(XmindService.this);
             locationProbe.unregisterListener(XmindService.this);
             runningApplicationsProbe.unregisterListener(runningAppListener);
             screenProbe.unregisterListener(XmindService.this);
@@ -135,6 +136,7 @@ public class XmindService extends Service implements Probe.DataListener {
 
             alarmManager.cancel(pendingIntent_CheckPoint);//Cancel timer
             alarmManager.cancel(pendingIntent_uploading);//Cancel timer
+            alarmManager.cancel(pendingIntent_calllog);//Cancel timer
             unbindService(funfManagerConn);
         }
 
@@ -390,13 +392,13 @@ public class XmindService extends Service implements Probe.DataListener {
 
         Intent CallLogIntent = new Intent(mContext, XmindReceiver.class);
         CallLogIntent.setAction(CALLLOG_REMINDER);
-        pendingIntent_uploading = PendingIntent.getBroadcast(mContext, 0, CallLogIntent, 0);
+        pendingIntent_calllog = PendingIntent.getBroadcast(mContext, 0, CallLogIntent, 0);
 
         Calendar CallLogCalendar = Calendar.getInstance();
         CallLogCalendar.setTimeInMillis(System.currentTimeMillis());
         CallLogCalendar.add(Calendar.SECOND, 60);
         long CallLogFrequency = 3 * 60 * 1000;
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, CallLogCalendar.getTimeInMillis(), CallLogFrequency, pendingIntent_uploading);
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, CallLogCalendar.getTimeInMillis(), CallLogFrequency, pendingIntent_calllog);
     }
 
     /*

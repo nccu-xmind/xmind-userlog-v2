@@ -32,12 +32,12 @@ import xmind.nccu.edu.xmind_funf.Util.funfHelper;
 /**
  * @author sid.ku
  * @version 1.2
- * @Edit Aug. 11, 2015
+ * @Edit Aug. 20, 2015
  * @since Jun. 15, 2015
  */
 public class Activity_xmind extends Activity {
 
-    private static final String TAG = "ssku";//Activity_xmind.class.getSimpleName();
+    private static final String TAG = Activity_xmind.class.getSimpleName();
 
     private AQuery aq;
     private Context mContext;
@@ -65,8 +65,7 @@ public class Activity_xmind extends Activity {
 
         mContext.startService(intent_initService);
 
-        if(Build.VERSION.SDK_INT > 21){//detect foreground
-//            Log.v(TAG, "Starting a testing service...");
+        if(Build.VERSION.SDK_INT > 21){//Get foreground a
 //            Intent intent_lollipopService = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
 //            startActivityForResult(intent_lollipopService, 0);
             Intent intent_lollipopService = new Intent(mContext, WindowChangeDetectingService.class);
