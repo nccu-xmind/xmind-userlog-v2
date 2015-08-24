@@ -1,8 +1,10 @@
 package xmind.nccu.edu.xmind_funf.NetworkService;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 
 import com.androidquery.AQuery;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 
 import xmind.nccu.edu.xmind_funf.Util.FunfDataBaseHelper;
 import xmind.nccu.edu.xmind_funf.Util.UploadUtil;
+import xmind.nccu.edu.xmind_funf.Util.UserLogUtil;
 
 /**
  * Created by sid.ku on 8/3/15.
@@ -43,8 +46,11 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
     private String deviceModel = "";
     private String UploadingTimestamp = "";
 
+    private SharedPreferences funf_xmind_sp;
+
     public UploadingHelper(Context mContext) {
         this.mContext = mContext;
+        funf_xmind_sp = UserLogUtil.GetSharedPreferencesForTimeControl(mContext);
         FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         FunfDataBaseHelper FDB_Device_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_DEVICE);
         dataCursor = FDB_Helper.selectDB();
@@ -107,6 +113,7 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
                 jsonData.accumulate(UploadUtil.OBJ_MAIL, primaryEMail);
                 jsonData.accumulate(UploadUtil.OBJ_MODEL, deviceModel);
                 jsonData.accumulate(UploadUtil.OBJ_DEVICE, deviceID);
+                jsonData.accumulate(UploadUtil.OBJ_ANDROIDVERSION, getAndroidVersion());
                 jsonData.accumulate(UploadUtil.OBJ_UPLOADING_TIME, UploadingTimestamp);
 
                 JSONArray jasonProbeArray = new JSONArray();
@@ -162,7 +169,7 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
                 jsonData.put(UploadUtil.PROBE_ARRAY, jasonProbeArray);
 
                 json = jsonData.toString();
-                Log.v(TAG, "json : " + json.toString());
+//                Log.v(TAG, "json : " + json.toString());
 
                 StringEntity se = new StringEntity(json);
                 httpPost.setEntity(se);
@@ -202,6 +209,12 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
         inputStream.close();
         return result;
 
+    }
+
+    private String getAndroidVersion(){
+        String release = Build.VERSION.RELEASE;
+        int sdkVersion = Build.VERSION.SDK_INT;
+        return "Android SDK: " + sdkVersion + " (" + release +")";
     }
 
 }

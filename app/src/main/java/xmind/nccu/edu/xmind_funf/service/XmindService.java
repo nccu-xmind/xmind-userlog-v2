@@ -59,7 +59,8 @@ import xmind.nccu.edu.xmind_funf.Util.UserLogUtil;
  */
 public class XmindService extends Service implements Probe.DataListener {
 
-    private static final String TAG = "ssku";//XmindService.class.getSimpleName();
+    private static final String TAG = XmindService.class.getSimpleName();
+    public static final boolean isRecordAppByActivityManager = false;//false == using accessibility in "all android version", true == 5.1(Acc...ity), 5.0 or 4.4(ActivityManger)
     private AQuery aq;
     public static final String PIPELINE_NAME = "XmindService";
     public static final String CHECK_POINT = "xmind_regular_check_point";
@@ -110,7 +111,6 @@ public class XmindService extends Service implements Probe.DataListener {
         isAlreadyRunning = false;//set it false if first time running this app.
         funf_xmind_sp = UserLogUtil.GetSharedPreferencesForTimeControl(this);
         callRecord = funf_xmind_sp.getInt(UserLogUtil.getCallLog, 0);
-//        Log.v(TAG, "===CallRecord : " + callRecord);
     }
 
     //STOP - service and unregister listener here
@@ -185,23 +185,23 @@ public class XmindService extends Service implements Probe.DataListener {
         if (!isAlreadyRunning) {
             IntentFilter filter = new IntentFilter(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
             this.registerReceiver(wifiStatusReceiver, filter);
-        } else
-            Log.w(TAG, "Not first time, wouldn't enable the two service again.");
+        } /*else
+            Log.w(TAG, "Not first time, wouldn't enable the two service again.");*/
 
         if (intent != null && intent.getAction() != null) {
             if (!isAlreadyRunning && intent.getAction().equals(FIRST_TIME_START_SERVICE)) {
-                Log.v(TAG, "Prepare to start service.");
+//                Log.v(TAG, "Prepare to start service.");
                 isAlreadyRunning = true;
                 bindService(new Intent(this, FunfManager.class), funfManagerConn, BIND_AUTO_CREATE);
                 setServiceCalendar();
                 getBatteryStatus();
             } else if (intent != null && intent.getAction().equals(CHECK_POINT)) {
-                Log.v(TAG, "Get action from checkpoint");
+//                Log.v(TAG, "Get action from checkpoint");
                 getBatteryStatus();
                 getServiceStatus();
 
                 if (isScreenOn) {
-                    if (Build.VERSION.SDK_INT < 22) {
+                    if (Build.VERSION.SDK_INT < 22 && isRecordAppByActivityManager) {
                         FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
                         GetCurrentRunningApp gcra = new GetCurrentRunningApp(mContext);
                         FDB_Helper.addCurrentForegroundAppRecord(FunfDataBaseHelper.CURRENT_FOREGROUND_APP, String.valueOf(System.currentTimeMillis()), gcra.getCurrentAppName());
@@ -209,7 +209,7 @@ public class XmindService extends Service implements Probe.DataListener {
                     }
                 }
             } else if (intent != null && intent.getAction().equals(UPLOADING_REMINDER)) {
-                Log.v(TAG, "Get action for remind uploading.");
+//                Log.v(TAG, "Get action for remind uploading.");
                 ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                 NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 
@@ -220,7 +220,7 @@ public class XmindService extends Service implements Probe.DataListener {
                 } else
                     Log.v(TAG, "Wifi is disconnected currently.");
             } else if (intent != null && intent.getAction().equals(CALLLOG_REMINDER)) {
-                Log.v(TAG, "Get action for remind uploading.");
+//                Log.v(TAG, "Get action for remind uploading.");
                 getCallLogHistory();
             }else if (intent != null && intent.getAction().equals(TAKE_PICTURE)) {
                 //using file observer to get photo event, NEW_PICTURE action is useless currently.
@@ -243,22 +243,22 @@ public class XmindService extends Service implements Probe.DataListener {
     private UploadingHelper.PostExecuteListener PostListner_SendingDataTask = new UploadingHelper.PostExecuteListener() {
         @Override
         public void onPostExecute(String result) {
-            Log.v(TAG, "Sent result : " + result);
+//            Log.v(TAG, "Sent result : " + result);
             try {
                 JSONObject js = new JSONObject(result);
                 if (js.getString("state").toString().equals("true")) {
                     Log.v(TAG, "Automatically uploading data succeed.");
-                    Toast.makeText(mContext, "Uploading data success and clear database, total : " + js.getString("count").toString(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(mContext, "Uploading data SUCCESS and clear database, total : " + js.getString("count").toString(), Toast.LENGTH_SHORT).show();
                     removeAll();
                 } else if (result.equals(UploadingHelper.STATUS_CODE_001)) {
-                    Log.v(TAG, "Automatically uploading failed, since no data.");
+//                    Log.v(TAG, "Automatically uploading failed, since no data.");
                     Toast.makeText(mContext, "No records currently.", Toast.LENGTH_SHORT).show();
                 } else {
-                    Log.v(TAG, "Automatically uploading failed, since unknow reason.");
-                    Toast.makeText(mContext, "Unknow status." + result, Toast.LENGTH_SHORT).show();
+//                    Log.v(TAG, "Automatically uploading failed, since unknow reason.");
+                    Toast.makeText(mContext, "Unknow status." + result, Toast.LENGTH_LONG).show();
                 }
             } catch (Exception e) {
-
+                Toast.makeText(mContext, "[NOT JSON OBJECT] :" + result, Toast.LENGTH_LONG).show();
             }
         }
     };
@@ -362,7 +362,7 @@ public class XmindService extends Service implements Probe.DataListener {
             callLogProbe.registerListener(XmindService.this);
             pipeline = (BasicPipeline) funfManager.getRegisteredPipeline(PIPELINE_NAME);
             funfManager.enablePipeline(PIPELINE_NAME);
-            Log.v(TAG, "After get callLog method...");
+//            Log.v(TAG, "After get callLog method...");
         } else
             Log.e(TAG, "Enable ServiceProbe's pipeline failed.");
     }
@@ -478,7 +478,7 @@ public class XmindService extends Service implements Probe.DataListener {
 
                 if (iJsonObject1.get("screenOn").toString().equals("true")) {
                     isScreenOn = true;//Only record it on screen on.
-                    if (Build.VERSION.SDK_INT < 22) {
+                    if (Build.VERSION.SDK_INT < 22 && isRecordAppByActivityManager) {
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
@@ -539,7 +539,7 @@ public class XmindService extends Service implements Probe.DataListener {
                     FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
                     FDB_Helper.addPhotoRecord(FunfDataBaseHelper.TAKE_A_NEW_PHOTO_EVENT, String.valueOf(System.currentTimeMillis()));
                     FDB_Helper.close();
-                    if (Build.VERSION.SDK_INT < 22) {
+                    if (Build.VERSION.SDK_INT < 22 && isRecordAppByActivityManager) {
                         handler.postDelayed(new Runnable() {//Check foreground app after 5 seconds when got new picture.
                             @Override
                             public void run() {

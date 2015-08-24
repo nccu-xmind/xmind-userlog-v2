@@ -39,6 +39,8 @@ public class Activity_xmind extends Activity {
 
     private static final String TAG = Activity_xmind.class.getSimpleName();
 
+    public static final boolean isEnableUI = true;
+
     private AQuery aq;
     private Context mContext;
     private boolean isServiceStart = false;
@@ -54,27 +56,29 @@ public class Activity_xmind extends Activity {
         setContentView(R.layout.act_xmind);
 
         mContext = this;
-        aq = new AQuery(this);
-        aq.id(R.id.btn_pipeline_controller).clicked(controller_ocl);
-        aq.id(R.id.btn_clear_DB).clicked(controller_ocl);
-        aq.id(R.id.iv_iv_1).background(R.drawable.gedetama2);
-        aq.id(R.id.btn_clear_DB).enabled(false);
 
+        //Start service automatically as foolowing code---------
         Intent intent_initService = new Intent(mContext, XmindService.class);
         intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
-
         mContext.startService(intent_initService);
+        isServiceStart = true;
 
-        if(Build.VERSION.SDK_INT > 21){//Get foreground a
+        if (Build.VERSION.SDK_INT > 21 || !(XmindService.isRecordAppByActivityManager)) {//Get foreground a
 //            Intent intent_lollipopService = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
 //            startActivityForResult(intent_lollipopService, 0);
             Intent intent_lollipopService = new Intent(mContext, WindowChangeDetectingService.class);
             mContext.startService(intent_lollipopService);
         }
 
-        isServiceStart = true;
-        updatePipelineStatus();
-
+        if(isEnableUI){
+            aq = new AQuery(this);
+            aq.id(R.id.btn_pipeline_controller).clicked(controller_ocl);
+            aq.id(R.id.btn_clear_DB).clicked(controller_ocl);
+            aq.id(R.id.iv_iv_1).background(R.drawable.gedetama2);
+            aq.id(R.id.btn_clear_DB).enabled(false);
+            updatePipelineStatus();
+        }else
+            finish();
     }
 
     private View.OnClickListener controller_ocl = new View.OnClickListener() {
@@ -91,15 +95,15 @@ public class Activity_xmind extends Activity {
                         showDataBastInListView();
 //                        printoutDB();
                     } else {
-                        aq.id(R.id.iv_iv_1).visible();
-                        aq.id(R.id.tv_db_count).gone();
-                        aq.id(R.id.timelimits_main_listview).gone();
-                        aq.id(R.id.btn_clear_DB).enabled(false);
-                        Intent intent_initService = new Intent(mContext, XmindService.class);
-                        intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
+                            aq.id(R.id.iv_iv_1).visible();
+                            aq.id(R.id.tv_db_count).gone();
+                            aq.id(R.id.timelimits_main_listview).gone();
+                            aq.id(R.id.btn_clear_DB).enabled(false);
+                            Intent intent_initService = new Intent(mContext, XmindService.class);
+                            intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
 
-                        mContext.startService(intent_initService);
-                        isServiceStart = true;
+                            mContext.startService(intent_initService);
+                            isServiceStart = true;
                     }
                     updatePipelineStatus();
                     break;

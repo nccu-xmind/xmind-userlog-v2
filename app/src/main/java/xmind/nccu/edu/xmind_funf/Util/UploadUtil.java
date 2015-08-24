@@ -23,6 +23,7 @@ public class UploadUtil {
     public static final String OBJ_MAIL = "UserID";
     public static final String OBJ_MODEL = "Model";
     public static final String OBJ_DEVICE = "HardwareID";
+    public static final String OBJ_ANDROIDVERSION = "AndroidVersion";
     public static final String OBJ_UPLOADING_TIME = "Timestamp";
     public static final String OBJ_PROBE_TYPE = "ProbeType";
     public static final String OBJ_TIMESTAMP = "TriggeredTimestamp";

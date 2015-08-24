@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 public class UserLogUtil {
     public static final String funf_xmind_SP = "funf_xmind_SP";
 
+    public static final String USER_ID = "funf_xmind_UserId";
     public static final String getCallLog = "funf_xmind_CallLog";
     public static final String getHardwareInfo = "funf_xmind_HardwareInfo";
 
