@@ -1,7 +1,6 @@
 package xmind.nccu.edu.xmind_funf.NetworkService;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -23,9 +22,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import xmind.nccu.edu.xmind_funf.R;
 import xmind.nccu.edu.xmind_funf.Util.FunfDataBaseHelper;
 import xmind.nccu.edu.xmind_funf.Util.UploadUtil;
-import xmind.nccu.edu.xmind_funf.Util.UserLogUtil;
 
 /**
  * Created by sid.ku on 8/3/15.
@@ -34,6 +33,11 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
     private static final String TAG = UploadingHelper.class.getSimpleName();
 
     public static final String STATUS_CODE_001 = "DatabaseIsEmpty";
+
+    /**
+     * true = upload all data in database, false = uploading with limitation, refer '@string/delete_N_rows'
+     **/
+    public static final boolean isUploadingAllData = false;
 
     private AQuery aq;
     private Context mContext;
@@ -46,11 +50,12 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
     private String deviceModel = "";
     private String UploadingTimestamp = "";
 
-    private SharedPreferences funf_xmind_sp;
+    private int uploadFirstNrows = 0;
+    private boolean isDeleteAll = false;
+
 
     public UploadingHelper(Context mContext) {
         this.mContext = mContext;
-        funf_xmind_sp = UserLogUtil.GetSharedPreferencesForTimeControl(mContext);
         FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         FunfDataBaseHelper FDB_Device_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_DEVICE);
         dataCursor = FDB_Helper.selectDB();
@@ -59,7 +64,7 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
         primaryEMail = UploadUtil.getDeviceEmail(mContext);
         ArrayList<String> al_device = new ArrayList<>();
         al_device = getDevice();
-        if(al_device.size() > 0){
+        if (al_device.size() > 0) {
             deviceModel = al_device.get(0);
             deviceID = al_device.get(1);
         }
@@ -94,7 +99,7 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String result) {
         try {
-            mPostExecuteListener.onPostExecute(result);
+            mPostExecuteListener.onPostExecute(result, isDeleteAll, uploadFirstNrows);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -119,7 +124,19 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
                 JSONArray jasonProbeArray = new JSONArray();
                 if (dataCursor.getCount() > 0) {
                     dataCursor.moveToFirst();
-                    for (int i = 0; i < dataCursor.getCount(); i++) {
+                    if (isUploadingAllData) {//true, uploading all in database.
+                        uploadFirstNrows = dataCursor.getCount();
+                        isDeleteAll = true;//Return true, service will delete all DB data if uploading success.
+                    } else {
+                        uploadFirstNrows = Integer.valueOf(mContext.getString(R.string.delete_N_rows));//Get N, check how many rows should be deleted.
+                        isDeleteAll = false;//Return false, service is going to delete first N rows in db.
+                        if (uploadFirstNrows > dataCursor.getCount()) {
+                            uploadFirstNrows = dataCursor.getCount();
+                            isDeleteAll = true;
+                        }
+                    }
+
+                    for (int i = 0; i < uploadFirstNrows; i++) {
                         JSONObject jsonProbeChild = new JSONObject();
                         String probeType = dataCursor.getString(1);
                         jsonProbeChild.put(UploadUtil.OBJ_PROBE_TYPE, probeType);
@@ -196,7 +213,7 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
     }
 
     public interface PostExecuteListener {
-        void onPostExecute(String result);
+        void onPostExecute(String result, boolean isDeleteAll ,int uploadFirstNrows);
     }
 
     private static String convertInputStreamToString(InputStream inputStream) throws IOException {
@@ -211,10 +228,10 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
 
     }
 
-    private String getAndroidVersion(){
+    private String getAndroidVersion() {
         String release = Build.VERSION.RELEASE;
         int sdkVersion = Build.VERSION.SDK_INT;
-        return "Android SDK: " + sdkVersion + " (" + release +")";
+        return "Android SDK: " + sdkVersion + " (" + release + ")";
     }
 
 }

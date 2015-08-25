@@ -57,7 +57,7 @@ public class Activity_xmind extends Activity {
 
         mContext = this;
 
-        //Start service automatically as foolowing code---------
+        //Start service automatically as following code---------
         Intent intent_initService = new Intent(mContext, XmindService.class);
         intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
         mContext.startService(intent_initService);

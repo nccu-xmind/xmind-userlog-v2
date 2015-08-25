@@ -209,20 +209,11 @@ public class XmindService extends Service implements Probe.DataListener {
                     }
                 }
             } else if (intent != null && intent.getAction().equals(UPLOADING_REMINDER)) {
-//                Log.v(TAG, "Get action for remind uploading.");
-                ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
-                if (mWifi.isConnected()) {
-                    UploadingHelper task = new UploadingHelper(mContext);
-                    task.setPostExecuteListener(PostListner_SendingDataTask);
-                    task.execute("http://mobilesns.cs.nccu.edu.tw/xmind-backend/bupload.php");
-                } else
-                    Log.v(TAG, "Wifi is disconnected currently.");
+                uploadingRecords();
             } else if (intent != null && intent.getAction().equals(CALLLOG_REMINDER)) {
 //                Log.v(TAG, "Get action for remind uploading.");
                 getCallLogHistory();
-            }else if (intent != null && intent.getAction().equals(TAKE_PICTURE)) {
+            } else if (intent != null && intent.getAction().equals(TAKE_PICTURE)) {
                 //using file observer to get photo event, NEW_PICTURE action is useless currently.
                 if (al_fo.size() == 0) {//no watcher!
                     FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
@@ -242,14 +233,17 @@ public class XmindService extends Service implements Probe.DataListener {
 
     private UploadingHelper.PostExecuteListener PostListner_SendingDataTask = new UploadingHelper.PostExecuteListener() {
         @Override
-        public void onPostExecute(String result) {
+        public void onPostExecute(String result, boolean isDeleteAll, int uploadFirstNrows) {
 //            Log.v(TAG, "Sent result : " + result);
             try {
                 JSONObject js = new JSONObject(result);
                 if (js.getString("state").toString().equals("true")) {
                     Log.v(TAG, "Automatically uploading data succeed.");
                     Toast.makeText(mContext, "Uploading data SUCCESS and clear database, total : " + js.getString("count").toString(), Toast.LENGTH_SHORT).show();
-                    removeAll();
+                    if (isDeleteAll)
+                        removeAll();
+                    else
+                        deleteFirstNRows(String.valueOf(uploadFirstNrows));
                 } else if (result.equals(UploadingHelper.STATUS_CODE_001)) {
 //                    Log.v(TAG, "Automatically uploading failed, since no data.");
                     Toast.makeText(mContext, "No records currently.", Toast.LENGTH_SHORT).show();
@@ -262,6 +256,32 @@ public class XmindService extends Service implements Probe.DataListener {
             }
         }
     };
+
+    private void uploadingRecords() {
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        if (mWifi.isConnected()) {
+            UploadingHelper task = new UploadingHelper(mContext);
+            task.setPostExecuteListener(PostListner_SendingDataTask);
+            task.execute("http://mobilesns.cs.nccu.edu.tw/xmind-backend/bupload.php");
+        } else
+            Log.v(TAG, "Wifi is disconnected currently.");
+    }
+
+    public void deleteFirstNRows(String deleteNrows) {
+        FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
+        SQLiteDatabase db = FDB_Helper.getWritableDatabase();
+        String ALTER_TBL = "delete from " + FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME +
+                " where _id in (select _id from " + FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME + " order by _id LIMIT " + deleteNrows + ");";
+        db.execSQL(ALTER_TBL);
+
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                uploadingRecords();
+            }
+        }, 30000);//re-loading other data after 10 seconds.
+    }
 
     /*
     Delete all data in database
@@ -355,7 +375,7 @@ public class XmindService extends Service implements Probe.DataListener {
     /*
     get call hsitory/Log  status by this method
      */
-    public void getCallLogHistory(){
+    public void getCallLogHistory() {
         if (funfManager != null) {
             Gson gson = funfManager.getGson();
             callLogProbe = gson.fromJson(new JsonObject(), CallLogProbe.class);
@@ -384,6 +404,7 @@ public class XmindService extends Service implements Probe.DataListener {
         UploadingIntent.setAction(UPLOADING_REMINDER);
         pendingIntent_uploading = PendingIntent.getBroadcast(mContext, 0, UploadingIntent, 0);
 
+        //Disable uploading function temporary.
         Calendar UploadingCalendar = Calendar.getInstance();
         UploadingCalendar.setTimeInMillis(System.currentTimeMillis());
         UploadingCalendar.add(Calendar.SECOND, 60);
