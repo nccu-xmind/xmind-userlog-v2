@@ -1,12 +1,10 @@
-package xmind.nccu.edu.xmind_funf.NetworkService;
+package xmind.nccu.edu.xmind_funf.Util;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.util.Log;
-
-import com.androidquery.AQuery;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -23,8 +21,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import xmind.nccu.edu.xmind_funf.R;
-import xmind.nccu.edu.xmind_funf.Util.FunfDataBaseHelper;
-import xmind.nccu.edu.xmind_funf.Util.UploadUtil;
 
 /**
  * Created by sid.ku on 8/3/15.
@@ -35,11 +31,10 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
     public static final String STATUS_CODE_001 = "DatabaseIsEmpty";
 
     /**
-     * true = upload all data in database, false = uploading with limitation, refer '@string/delete_N_rows'
+     * true == upload all data in database, false == uploading with limitation, refer '@string/delete_N_rows'
      **/
     public static final boolean isUploadingAllData = false;
 
-    private AQuery aq;
     private Context mContext;
     private PostExecuteListener mPostExecuteListener;
     private Cursor dataCursor = null;

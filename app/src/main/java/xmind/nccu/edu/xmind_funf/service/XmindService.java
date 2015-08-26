@@ -23,7 +23,6 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.androidquery.AQuery;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -47,11 +46,11 @@ import edu.mit.media.funf.probe.builtin.RunningApplicationsProbe;
 import edu.mit.media.funf.probe.builtin.ScreenProbe;
 import edu.mit.media.funf.probe.builtin.ServicesProbe;
 import edu.mit.media.funf.probe.builtin.TemperatureSensorProbe;
-import edu.mit.media.funf.storage.NameValueDatabaseHelper;
-import xmind.nccu.edu.xmind_funf.GetCurrentRunningApp;
-import xmind.nccu.edu.xmind_funf.NetworkService.UploadingHelper;
+import xmind.nccu.edu.xmind_funf.R;
 import xmind.nccu.edu.xmind_funf.Util.FunfDataBaseHelper;
+import xmind.nccu.edu.xmind_funf.Util.GetCurrentRunningApp;
 import xmind.nccu.edu.xmind_funf.Util.UploadUtil;
+import xmind.nccu.edu.xmind_funf.Util.UploadingHelper;
 import xmind.nccu.edu.xmind_funf.Util.UserLogUtil;
 
 /**
@@ -61,9 +60,9 @@ public class XmindService extends Service implements Probe.DataListener {
 
     private static final String TAG = XmindService.class.getSimpleName();
     public static final boolean isRecordAppByActivityManager = false;//false == using accessibility in "all android version", true == 5.1(Acc...ity), 5.0 or 4.4(ActivityManger)
-    private AQuery aq;
     public static final String PIPELINE_NAME = "XmindService";
     public static final String CHECK_POINT = "xmind_regular_check_point";
+    public static final String SERVICE_PROBE = "xmind_service_probe_reminder";
     public static final String UPLOADING_REMINDER = "xmind_upload_data_reminder";
     public static final String CALLLOG_REMINDER = "xmind_upload_callLog_reminder";
     public static final String TAKE_PICTURE = "xmind_action_take_picture";
@@ -92,12 +91,10 @@ public class XmindService extends Service implements Probe.DataListener {
 
     private AlarmManager alarmManager;
     private PendingIntent pendingIntent_CheckPoint;
+    private PendingIntent pendingIntent_ServiceProbe;
     private PendingIntent pendingIntent_uploading;
     private PendingIntent pendingIntent_calllog;
 
-    private NameValueDatabaseHelper mNameValueDatabaseHelper;
-
-    //    private FileObserver observer = null;
     private ArrayList<FileObserver> al_fo = new ArrayList<>();
     private final Handler handler = new Handler();
 
@@ -105,15 +102,20 @@ public class XmindService extends Service implements Probe.DataListener {
     private SharedPreferences funf_xmind_sp;
     private int callRecord = 0;
 
+    /* *
+     * Start from here if first time launch service.
+     * */
     @Override
     public void onCreate() {
         super.onCreate();
         isAlreadyRunning = false;//set it false if first time running this app.
-        funf_xmind_sp = UserLogUtil.GetSharedPreferencesForTimeControl(this);
-        callRecord = funf_xmind_sp.getInt(UserLogUtil.getCallLog, 0);
+        funf_xmind_sp = UserLogUtil.GetSharedPreferencesForTimeControl(this);//get SharedPreference here.
+        callRecord = funf_xmind_sp.getInt(UserLogUtil.getCallLog, 0);//Check call history, get zero if it's first time.
     }
 
-    //STOP - service and unregister listener here
+    /* *
+     * Service will unregister all listener and stop all alarmManger if service has been stop.
+     * */
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -122,7 +124,6 @@ public class XmindService extends Service implements Probe.DataListener {
 
 //            wifiProbe.unregisterListener(XmindService.this);
             bluetoothProbe.unregisterListener(XmindService.this);
-//            callLogProbe.unregisterListener(XmindService.this);
             locationProbe.unregisterListener(XmindService.this);
             runningApplicationsProbe.unregisterListener(runningAppListener);
             screenProbe.unregisterListener(XmindService.this);
@@ -135,6 +136,7 @@ public class XmindService extends Service implements Probe.DataListener {
             hardwareInfoProbe.unregisterListener(XmindService.this);
 
             alarmManager.cancel(pendingIntent_CheckPoint);//Cancel timer
+//            alarmManager.cancel(pendingIntent_ServiceProbe);//Cancel timer
             alarmManager.cancel(pendingIntent_uploading);//Cancel timer
             alarmManager.cancel(pendingIntent_calllog);//Cancel timer
             unbindService(funfManagerConn);
@@ -149,9 +151,9 @@ public class XmindService extends Service implements Probe.DataListener {
         this.unregisterReceiver(wifiStatusReceiver);
     }
 
-    /*
-    get probe type from input string
-     */
+    /* *
+     * Simplify the ProbeType by this method.
+     * */
     private String getType(String targetType) {
         String result = "";
         if (targetType != null && !targetType.equals("")) {
@@ -174,9 +176,9 @@ public class XmindService extends Service implements Probe.DataListener {
         }
     };
 
-    /*
-    enable wifi listener here and executive different probes according action event
-     */
+    /* *
+     * enable wifi listener here and executive different probes according action event
+     * */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         mContext = this;
@@ -188,6 +190,7 @@ public class XmindService extends Service implements Probe.DataListener {
         } /*else
             Log.w(TAG, "Not first time, wouldn't enable the two service again.");*/
 
+        //Check the message from 'XmindReceiver' as following:
         if (intent != null && intent.getAction() != null) {
             if (!isAlreadyRunning && intent.getAction().equals(FIRST_TIME_START_SERVICE)) {
 //                Log.v(TAG, "Prepare to start service.");
@@ -208,6 +211,8 @@ public class XmindService extends Service implements Probe.DataListener {
                         FDB_Helper.close();
                     }
                 }
+            } else if (intent != null && intent.getAction().equals(SERVICE_PROBE)) {
+                getServiceStatus();
             } else if (intent != null && intent.getAction().equals(UPLOADING_REMINDER)) {
                 uploadingRecords();
             } else if (intent != null && intent.getAction().equals(CALLLOG_REMINDER)) {
@@ -231,6 +236,9 @@ public class XmindService extends Service implements Probe.DataListener {
         return super.onStartCommand(intent, flags, startId);
     }
 
+    /* *
+     * do something, after uploading success or not.
+     * */
     private UploadingHelper.PostExecuteListener PostListner_SendingDataTask = new UploadingHelper.PostExecuteListener() {
         @Override
         public void onPostExecute(String result, boolean isDeleteAll, int uploadFirstNrows) {
@@ -257,10 +265,13 @@ public class XmindService extends Service implements Probe.DataListener {
         }
     };
 
+    /* *
+     * Upload user record by this method.
+     * */
     private void uploadingRecords() {
         ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        if (mWifi.isConnected()) {
+        if (mWifi.isConnected()) {//Start uploading processing if wifi is available.
             UploadingHelper task = new UploadingHelper(mContext);
             task.setPostExecuteListener(PostListner_SendingDataTask);
             task.execute("http://mobilesns.cs.nccu.edu.tw/xmind-backend/bupload.php");
@@ -268,6 +279,9 @@ public class XmindService extends Service implements Probe.DataListener {
             Log.v(TAG, "Wifi is disconnected currently.");
     }
 
+    /* *
+    * Delete first N rows from Database after uploading success.
+    * */
     public void deleteFirstNRows(String deleteNrows) {
         FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         SQLiteDatabase db = FDB_Helper.getWritableDatabase();
@@ -280,12 +294,12 @@ public class XmindService extends Service implements Probe.DataListener {
             public void run() {
                 uploadingRecords();
             }
-        }, 30000);//re-loading other data after 10 seconds.
+        }, 30000);//re-uploading other data after 30 seconds.
     }
 
-    /*
-    Delete all data in database
-     */
+    /* *
+     * Delete all data in database
+     * */
     private void removeAll() {
         deleteSingleDB(FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
         Log.v(TAG, "Remove all data from database...");
@@ -298,9 +312,11 @@ public class XmindService extends Service implements Probe.DataListener {
         db_device.close();
     }
 
-    /*
-        Wifi Tag : 0 == wifi has been turned on and connected; 1 == wifi has been turned off; 2 == wifi turned on, but no signal currently.
-     */
+    /* *
+     * get wifi status change by this listener.
+     *
+     * @wifiTag: Wifi Tag : 0 == wifi has been turned on and connected; 1 == wifi has been turned off; 2 == wifi turned on, but no signal currently.
+     * */
     private BroadcastReceiver wifiStatusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -344,9 +360,9 @@ public class XmindService extends Service implements Probe.DataListener {
         return null;
     }
 
-    /*
-    get phone's battery status by this method
-     */
+    /* *
+     * get phone's battery status by this method
+     * */
     public void getBatteryStatus() {
         if (funfManager != null) {
             Gson gson = funfManager.getGson();
@@ -358,9 +374,9 @@ public class XmindService extends Service implements Probe.DataListener {
             Log.e(TAG, "Enable battery's pipeline failed.");
     }
 
-    /*
-    get service's status by this method
-     */
+    /* *
+     * get service's status by this method
+     * */
     public void getServiceStatus() {
         if (funfManager != null) {
             Gson gson = funfManager.getGson();
@@ -372,9 +388,9 @@ public class XmindService extends Service implements Probe.DataListener {
             Log.e(TAG, "Enable ServiceProbe's pipeline failed.");
     }
 
-    /*
-    get call hsitory/Log  status by this method
-     */
+    /* *
+     * get call hsitory status by this method
+     * */
     public void getCallLogHistory() {
         if (funfManager != null) {
             Gson gson = funfManager.getGson();
@@ -387,44 +403,56 @@ public class XmindService extends Service implements Probe.DataListener {
             Log.e(TAG, "Enable ServiceProbe's pipeline failed.");
     }
 
+    /* *
+     * set the frequency(Checking) of all probes here.
+     * */
     private void setServiceCalendar() {
-        Intent myIntent = new Intent(mContext, XmindReceiver.class);
-        myIntent.setAction(CHECK_POINT);
-        pendingIntent_CheckPoint = PendingIntent.getBroadcast(mContext, 0, myIntent, 0);
-
+        //Set regular checkpoint calendar:
+        Intent ChcekPointIntent = new Intent(mContext, XmindReceiver.class);
+        ChcekPointIntent.setAction(CHECK_POINT);
+        pendingIntent_CheckPoint = PendingIntent.getBroadcast(mContext, 0, ChcekPointIntent, 0);
         alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.add(Calendar.SECOND, 60);
-        long frequency = 60 * 1000;
+        long frequency = mContext.getResources().getInteger(R.integer.timer_checkpoint_frequency) * 60 * 1000;//One minute.
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent_CheckPoint);
 
+        //Set ServiceProbe calendar,(Disable this calendar, since the frequency is same with CheckPoint.(Do it together with CheckPoint)):
+//        Intent ServiceProbeIntent = new Intent(mContext, XmindReceiver.class);
+//        ServiceProbeIntent.setAction(SERVICE_PROBE);
+//        pendingIntent_ServiceProbe = PendingIntent.getBroadcast(mContext, 0, ServiceProbeIntent, 0);
+//        alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
+//        Calendar ServiceProbeCalendar = Calendar.getInstance();
+//        ServiceProbeCalendar.setTimeInMillis(System.currentTimeMillis());
+//        ServiceProbeCalendar.add(Calendar.SECOND, 60);
+//        long serviceProvefrequency = mContext.getResources().getInteger(R.integer.timer_service_prove_frequency) * 60 * 1000;//One minute.
+//        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, ServiceProbeCalendar.getTimeInMillis(), serviceProvefrequency, pendingIntent_ServiceProbe);
 
+        //Set uploading calendar:
         Intent UploadingIntent = new Intent(mContext, XmindReceiver.class);
         UploadingIntent.setAction(UPLOADING_REMINDER);
         pendingIntent_uploading = PendingIntent.getBroadcast(mContext, 0, UploadingIntent, 0);
-
-        //Disable uploading function temporary.
         Calendar UploadingCalendar = Calendar.getInstance();
         UploadingCalendar.setTimeInMillis(System.currentTimeMillis());
         UploadingCalendar.add(Calendar.SECOND, 60);
-        long uploadingFrequency = 2 * 60 * 1000;
+        long uploadingFrequency = mContext.getResources().getInteger(R.integer.timer_uploading_frequency) * 60 * 1000;
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, UploadingCalendar.getTimeInMillis(), uploadingFrequency, pendingIntent_uploading);
 
+        //Set call log calendar:
         Intent CallLogIntent = new Intent(mContext, XmindReceiver.class);
         CallLogIntent.setAction(CALLLOG_REMINDER);
         pendingIntent_calllog = PendingIntent.getBroadcast(mContext, 0, CallLogIntent, 0);
-
         Calendar CallLogCalendar = Calendar.getInstance();
         CallLogCalendar.setTimeInMillis(System.currentTimeMillis());
         CallLogCalendar.add(Calendar.SECOND, 60);
-        long CallLogFrequency = 3 * 60 * 1000;
+        long CallLogFrequency = mContext.getResources().getInteger(R.integer.timer_calllog_frequency) * 60 * 1000;
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, CallLogCalendar.getTimeInMillis(), CallLogFrequency, pendingIntent_calllog);
     }
 
-    /*
-    Active all probes and register listener here
-     */
+    /* *
+     * Active all probes and register listener here
+     * */
     private void registerProbes(boolean funfManagerIsNotNull) {
         if (funfManagerIsNotNull) {
             Gson gson = funfManager.getGson();
@@ -438,14 +466,12 @@ public class XmindService extends Service implements Probe.DataListener {
             pipeline = (BasicPipeline) funfManager.getRegisteredPipeline(PIPELINE_NAME);
 
             bluetoothProbe.registerPassiveListener(XmindService.this);
-//            callLogProbe.registerListener(XmindService.this);
             locationProbe.registerPassiveListener(XmindService.this);
 
             runningApplicationsProbe.registerListener(runningAppListener);
 
             screenProbe.registerPassiveListener(XmindService.this);
             temperatureSensorProbe.registerPassiveListener(XmindService.this);
-//            temperatureSensorProbe.registerListener(XmindService.this);
             hardwareInfoProbe.registerListener(XmindService.this);
 
             funfManager.enablePipeline(PIPELINE_NAME);
@@ -464,6 +490,9 @@ public class XmindService extends Service implements Probe.DataListener {
         }
     };
 
+    /* *
+     * get status changed events here.
+     * */
     @Override
     public void onDataReceived(IJsonObject iJsonObject, IJsonObject iJsonObject1) {
 //        Log.i(TAG, "(3)Get event : " + getType(iJsonObject.get("@type").toString()) + ", data : " + iJsonObject1.toString());
@@ -547,9 +576,9 @@ public class XmindService extends Service implements Probe.DataListener {
         }
     }
 
-    /*
-    FileObserver for listene if user take a new photo
-     */
+    /* *
+     * Add FileObserver for listen if user take a new photo
+     * */
     private FileObserver addFileObserver(String path) {
         FileObserver observer = new FileObserver(path) { // set up a file observer to watch the DCIM directory
             @Override
@@ -579,26 +608,25 @@ public class XmindService extends Service implements Probe.DataListener {
         return observer;
     }
 
-    /*
-    Enable or disable fileobserver depend on deveice
-     */
+    /* *
+     * Enable or disable FileObserver depend on deveice
+     * */
     private void setFileObserverStatus() {
-        //TODO adjust logic here. using SP to check here.
 //        Log.v(TAG, "isNewPictureByReceiver : " + isNewPictureByReceiver + ", Size : " + al_fo.size());
         if (!isNewPictureByReceiver) {//FileObserver wouldn't active if we could get NEW_Picture action from XmindReceiver.
             if (al_fo.size() == 0) {
 //                Log.i(TAG, "FileObserver is Enabled.");
 //            String albumPath = "";
                 File f = new File(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA");
-                if (f.isDirectory()) {
+                if (f.isDirectory())
                     al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Came100MEDIAra"));
-                } /*else
+                /*else
                     Log.e(TAG, "100MEDIA NOT exist");*/
 
                 File f2 = new File(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera");
-                if (f2.isDirectory()) {
+                if (f2.isDirectory())
                     al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"));
-                } /*else
+                /*else
                     Log.e(TAG, "Camera NOT exist");*/
             }
         } else {

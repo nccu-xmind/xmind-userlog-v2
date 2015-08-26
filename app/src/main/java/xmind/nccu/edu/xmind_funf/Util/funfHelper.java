@@ -8,8 +8,11 @@ import java.util.Locale;
 /**
  * Created by sid.ku on 7/30/15.
  */
-public class funfHelper {
+public class FunfHelper {
 
+    /**
+     * Convert timestamp from 'System.currentTimeMillis()'
+     * */
     public static String getDate(String timestamp) {
         try{
             long time = Long.parseLong(timestamp);

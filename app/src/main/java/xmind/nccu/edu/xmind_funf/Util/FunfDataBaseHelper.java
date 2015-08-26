@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.Arrays;
 
@@ -15,7 +14,6 @@ import edu.mit.media.funf.storage.NameValueDatabaseHelper;
  * Created by sid.ku on 7/15/15.
  */
 public class FunfDataBaseHelper extends SQLiteOpenHelper {
-    private Context mContext;
     public static final String XMIND_FUNF_DATABASE_NAME = "XmindFunf_Database";
     public static final String XMIND_FUNF_DATABASE_DEVICE = "Device_info";
     public static final int CURRENT_VERSION = 1;
@@ -54,7 +52,6 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
 
     public FunfDataBaseHelper(Context context, String name) {
         super(context, COLUMN_DATABASE_NAME, null, CURRENT_VERSION);
-        this.mContext = context;
         this.databaseName = name;
     }
 
@@ -71,14 +68,14 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    /* select all record */
+    /* select all record from record table */
     public Cursor selectData() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(XMIND_FUNF_DATABASE_NAME, new String[]{"_id", "name", "timestamp", "value"}, null, null, null, null, null);
         return cursor;
     }
 
-    /* select all record2 */
+    /* select all record from device table */
     public Cursor selectData2() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.query(XMIND_FUNF_DATABASE_DEVICE, new String[]{"_id", "dbname", "device", "uuid", "created"}, null, null, null, null, null);
@@ -148,7 +145,6 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
     public long addCurrentForegroundAppRecord(String name, String timestamp, String packageName) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
-        Log.v("ssku", "====@Insert - name : " + name);
         cv.put("name", name);
         cv.put("timestamp", timestamp);
         cv.put("packageName", packageName);

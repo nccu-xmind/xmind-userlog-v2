@@ -1,4 +1,4 @@
-package xmind.nccu.edu.xmind_funf;
+package xmind.nccu.edu.xmind_funf.Util;
 
 import android.app.ActivityManager;
 import android.app.usage.UsageStats;

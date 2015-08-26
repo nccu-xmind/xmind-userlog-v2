@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- Layout size-->
     <dimen name="nsa_left_bar_width">10dp</dimen>
     <dimen name="nsa_card_margin">16dp</dimen>
     <dimen name="nsa_avatar_diameter_large">70dp</dimen>
@@ -9,11 +10,17 @@
     <dimen name="nsa_picker_arrow_diameter">42dp</dimen>
     <dimen name="nsa_top_bar_btn_back_side">50dp</dimen>
 
-    <!-- text size -->
+    <!-- Text size -->
     <dimen name="nsa_label_text_size">20sp</dimen>
 
-    <!-- dialog text size -->
+    <!-- Dialog text size -->
     <dimen name="nsa_dialog_button_text_size">20sp</dimen>
     <dimen name="nsa_dialog_message_text_size">18sp</dimen>
+
+    <!-- Timer parameters(Minute)-->
+    <integer name="timer_checkpoint_frequency">1</integer>
+    <integer name="timer_service_prove_frequency">1</integer>
+    <integer name="timer_uploading_frequency">2</integer>
+    <integer name="timer_calllog_frequency">3</integer>
 
 </resources>

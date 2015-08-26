@@ -27,7 +27,7 @@ import xmind.nccu.edu.xmind_funf.Service.XmindService;
 import xmind.nccu.edu.xmind_funf.Util.FunfDataBaseHelper;
 import xmind.nccu.edu.xmind_funf.Util.ProbesObject;
 import xmind.nccu.edu.xmind_funf.Util.UploadUtil;
-import xmind.nccu.edu.xmind_funf.Util.funfHelper;
+import xmind.nccu.edu.xmind_funf.Util.FunfHelper;
 
 /**
  * @author sid.ku
@@ -35,9 +35,9 @@ import xmind.nccu.edu.xmind_funf.Util.funfHelper;
  * @Edit Aug. 20, 2015
  * @since Jun. 15, 2015
  */
-public class Activity_xmind extends Activity {
+public class ActivityUserLogApp extends Activity {
 
-    private static final String TAG = Activity_xmind.class.getSimpleName();
+    private static final String TAG = ActivityUserLogApp.class.getSimpleName();
 
     public static final boolean isEnableUI = true;
 
@@ -197,7 +197,7 @@ public class Activity_xmind extends Activity {
 
         if (al_ProbesObjects.size() > 0) {
             aq.id(R.id.btn_clear_DB).enabled(true);//Enable delete button if size not zero.
-            mListViewAdapter = new ListViewAdapter(Activity_xmind.this, 0, al_ProbesObjects);
+            mListViewAdapter = new ListViewAdapter(ActivityUserLogApp.this, 0, al_ProbesObjects);
             aq.id(R.id.timelimits_main_listview).getListView().setAdapter(mListViewAdapter);
         } else
             Toast.makeText(mContext, "No records found in database", Toast.LENGTH_LONG).show();
@@ -285,7 +285,7 @@ public class Activity_xmind extends Activity {
             }
 
             final String probeName = po.get(position).getProbeName();
-            final String timestamp = funfHelper.getDate(po.get(position).getTimestamp());
+            final String timestamp = FunfHelper.getDate(po.get(position).getTimestamp());
             holder.tv_name_single_app_up.setText(probeName);
             holder.tv_name_single_app_under.setText(timestamp);
 
