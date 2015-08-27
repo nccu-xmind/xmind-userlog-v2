@@ -120,6 +120,7 @@ public class XmindService extends Service implements Probe.DataListener {
     public void onDestroy() {
         super.onDestroy();
         if (funfManager != null) {
+            isAlreadyRunning = false;
             funfManager.disablePipeline(PIPELINE_NAME);
 
 //            wifiProbe.unregisterListener(XmindService.this);
@@ -192,13 +193,13 @@ public class XmindService extends Service implements Probe.DataListener {
 
         //Check the message from 'XmindReceiver' as following:
         if (intent != null && intent.getAction() != null) {
-            if (!isAlreadyRunning && intent.getAction().equals(FIRST_TIME_START_SERVICE)) {
+            if (!isAlreadyRunning || intent.getAction().equals(FIRST_TIME_START_SERVICE) || !(funfManager != null)) {
 //                Log.v(TAG, "Prepare to start service.");
                 isAlreadyRunning = true;
                 bindService(new Intent(this, FunfManager.class), funfManagerConn, BIND_AUTO_CREATE);
                 setServiceCalendar();
                 getBatteryStatus();
-            } else if (intent != null && intent.getAction().equals(CHECK_POINT)) {
+            } else if (intent.getAction().equals(CHECK_POINT)) {
 //                Log.v(TAG, "Get action from checkpoint");
                 getBatteryStatus();
                 getServiceStatus();
@@ -211,14 +212,14 @@ public class XmindService extends Service implements Probe.DataListener {
                         FDB_Helper.close();
                     }
                 }
-            } else if (intent != null && intent.getAction().equals(SERVICE_PROBE)) {
+            } else if (intent.getAction().equals(SERVICE_PROBE)) {
                 getServiceStatus();
-            } else if (intent != null && intent.getAction().equals(UPLOADING_REMINDER)) {
+            } else if (intent.getAction().equals(UPLOADING_REMINDER)) {
                 uploadingRecords();
-            } else if (intent != null && intent.getAction().equals(CALLLOG_REMINDER)) {
+            } else if (intent.getAction().equals(CALLLOG_REMINDER)) {
 //                Log.v(TAG, "Get action for remind uploading.");
                 getCallLogHistory();
-            } else if (intent != null && intent.getAction().equals(TAKE_PICTURE)) {
+            } else if (intent.getAction().equals(TAKE_PICTURE)) {
                 //using file observer to get photo event, NEW_PICTURE action is useless currently.
                 if (al_fo.size() == 0) {//no watcher!
                     FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);

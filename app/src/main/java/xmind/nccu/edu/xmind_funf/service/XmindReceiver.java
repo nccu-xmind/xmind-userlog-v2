@@ -14,8 +14,10 @@ public class XmindReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent != null && intent.getAction() != null) {
-//            Log.v(TAG, "@Receiver, get action : " + intent.getAction().toString());
+//            Log.v("ssku", "@Receiver, get action : " + intent.getAction().toString());
             if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+//                Log.d("ssku", "StartUpBootReceiver BOOT_COMPLETED");
+//                Toast.makeText(context, "=========ACTION_BOOT_COMPLETED=========@Funf", Toast.LENGTH_LONG).show();
                 Intent intent_initService = new Intent(context, XmindService.class);
                 intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
                 context.startService(intent_initService);

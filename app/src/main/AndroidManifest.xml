@@ -37,10 +37,9 @@
         android:theme="@style/AppTheme">
 
         <receiver
-            android:name=".Service.XmindReceiver"
+            android:name="xmind.nccu.edu.xmind_funf.Service.XmindReceiver"
             android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
@@ -51,6 +50,7 @@
                 <action android:name="WifiManager.SUPPLICANT_STATE_CHANGED_ACTION" />"
                 <action android:name="android.hardware.action.NEW_PICTURE" />
                 <data android:mimeType="image/*" />
+                <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </receiver>
 
