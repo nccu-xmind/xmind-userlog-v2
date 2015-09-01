@@ -18,9 +18,9 @@
     <dimen name="nsa_dialog_message_text_size">18sp</dimen>
 
     <!-- Timer parameters(Minute)-->
-    <integer name="timer_checkpoint_frequency">1</integer>
-    <integer name="timer_service_prove_frequency">1</integer>
-    <integer name="timer_uploading_frequency">2</integer>
-    <integer name="timer_calllog_frequency">3</integer>
+    <integer name="timer_checkpoint_frequency">3</integer>
+    <integer name="timer_service_prove_frequency">30</integer>
+    <integer name="timer_uploading_frequency">60</integer>
+    <integer name="timer_calllog_frequency">120</integer>
 
 </resources>

@@ -21,7 +21,6 @@ import android.os.FileObserver;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -54,7 +53,10 @@ import xmind.nccu.edu.xmind_funf.Util.UploadingHelper;
 import xmind.nccu.edu.xmind_funf.Util.UserLogUtil;
 
 /**
- * Created by sid.ku on 6/22/15.
+ * @author sid.ku
+ * @version 1.2
+ * @Edit Sep. 1, 2015
+ * @since Jun. 22, 2015
  */
 public class XmindService extends Service implements Probe.DataListener {
 
@@ -137,7 +139,7 @@ public class XmindService extends Service implements Probe.DataListener {
             hardwareInfoProbe.unregisterListener(XmindService.this);
 
             alarmManager.cancel(pendingIntent_CheckPoint);//Cancel timer
-//            alarmManager.cancel(pendingIntent_ServiceProbe);//Cancel timer
+            alarmManager.cancel(pendingIntent_ServiceProbe);//Cancel timer
             alarmManager.cancel(pendingIntent_uploading);//Cancel timer
             alarmManager.cancel(pendingIntent_calllog);//Cancel timer
             unbindService(funfManagerConn);
@@ -184,13 +186,6 @@ public class XmindService extends Service implements Probe.DataListener {
     public int onStartCommand(Intent intent, int flags, int startId) {
         mContext = this;
 
-        //Register GPS listener, wifi listener and enable them on first time.
-        if (!isAlreadyRunning) {
-            IntentFilter filter = new IntentFilter(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
-            this.registerReceiver(wifiStatusReceiver, filter);
-        } /*else
-            Log.w(TAG, "Not first time, wouldn't enable the two service again.");*/
-
         //Check the message from 'XmindReceiver' as following:
         if (intent != null && intent.getAction() != null) {
             if (!isAlreadyRunning || intent.getAction().equals(FIRST_TIME_START_SERVICE) || !(funfManager != null)) {
@@ -199,10 +194,17 @@ public class XmindService extends Service implements Probe.DataListener {
                 bindService(new Intent(this, FunfManager.class), funfManagerConn, BIND_AUTO_CREATE);
                 setServiceCalendar();
                 getBatteryStatus();
+
+                //Register GPS listener, wifi listener and enable them on first time.
+                IntentFilter filter = new IntentFilter(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
+                this.registerReceiver(wifiStatusReceiver, filter);
+
+                //Create FileObserver on first time, and check status on the following.
+                setFileObserverStatus();//Stop watching folder if 'isNewPictureByReceiver' is true, otherwise, start watching.
             } else if (intent.getAction().equals(CHECK_POINT)) {
 //                Log.v(TAG, "Get action from checkpoint");
                 getBatteryStatus();
-                getServiceStatus();
+//                getServiceStatus();
 
                 if (isScreenOn) {
                     if (Build.VERSION.SDK_INT < 22 && isRecordAppByActivityManager) {
@@ -227,12 +229,11 @@ public class XmindService extends Service implements Probe.DataListener {
                     FDB_Helper.close();
                 }
                 isNewPictureByReceiver = true;
+                //Create FileObserver on first time, and check status on the following.
+                setFileObserverStatus();//Stop watching folder if 'isNewPictureByReceiver' is true, otherwise, start watching.
             }
         } else
             Log.e(TAG, "Error, Start service with issue.");
-
-        //Create FileObserver on first time, and check status on the following.
-        setFileObserverStatus();//Stop watching folder if 'isNewPictureByReceiver' is true, otherwise, start watching.
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -247,21 +248,21 @@ public class XmindService extends Service implements Probe.DataListener {
             try {
                 JSONObject js = new JSONObject(result);
                 if (js.getString("state").toString().equals("true")) {
-                    Log.v(TAG, "Automatically uploading data succeed.");
-                    Toast.makeText(mContext, "Uploading data SUCCESS and clear database, total : " + js.getString("count").toString(), Toast.LENGTH_SHORT).show();
+//                    Log.v(TAG, "Automatically uploading data succeed.");
+//                    Toast.makeText(mContext, "Uploading data SUCCESS and clear database, total : " + js.getString("count").toString(), Toast.LENGTH_SHORT).show();
                     if (isDeleteAll)
                         removeAll();
                     else
                         deleteFirstNRows(String.valueOf(uploadFirstNrows));
-                } else if (result.equals(UploadingHelper.STATUS_CODE_001)) {
+                } /*else if (result.equals(UploadingHelper.STATUS_CODE_001)) {
 //                    Log.v(TAG, "Automatically uploading failed, since no data.");
-                    Toast.makeText(mContext, "No records currently.", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(mContext, "No records currently.", Toast.LENGTH_SHORT).show();
                 } else {
 //                    Log.v(TAG, "Automatically uploading failed, since unknow reason.");
-                    Toast.makeText(mContext, "Unknow status." + result, Toast.LENGTH_LONG).show();
-                }
+//                    Toast.makeText(mContext, "Unknow status." + result, Toast.LENGTH_LONG).show();
+                }*/
             } catch (Exception e) {
-                Toast.makeText(mContext, "[NOT JSON OBJECT] :" + result, Toast.LENGTH_LONG).show();
+//                Toast.makeText(mContext, "[NOT JSON OBJECT] :" + result, Toast.LENGTH_LONG).show();
             }
         }
     };
@@ -272,12 +273,18 @@ public class XmindService extends Service implements Probe.DataListener {
     private void uploadingRecords() {
         ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        if (mWifi.isConnected()) {//Start uploading processing if wifi is available.
+        boolean is3gAvailable = false;
+        try {
+            is3gAvailable = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting();
+        } catch (Exception e) {
+        }//Device is tablet computer.
+
+        if (mWifi.isConnected() || is3gAvailable) {//Start uploading processing if Wifi or MobileData is available.
             UploadingHelper task = new UploadingHelper(mContext);
             task.setPostExecuteListener(PostListner_SendingDataTask);
             task.execute("http://mobilesns.cs.nccu.edu.tw/xmind-backend/bupload.php");
         } else
-            Log.v(TAG, "Wifi is disconnected currently.");
+            Log.w(TAG, "Wifi is disconnected currently.");
     }
 
     /* *
@@ -336,6 +343,14 @@ public class XmindService extends Service implements Probe.DataListener {
             int wifiTag = -1;
             if (supState.equals(SupplicantState.COMPLETED)) {
                 wifiTag = wifiManager.isWifiEnabled() ? 0 : 1;
+                if (wifiTag == 0) {//0 == connected
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            uploadingRecords();
+                        }
+                    }, 5000);//Start uploading data after 5 seconds if wifi connected.
+                }
             } else if (supState.equals(SupplicantState.DISCONNECTED)) {
                 wifiTag = 2;
             }
@@ -420,15 +435,15 @@ public class XmindService extends Service implements Probe.DataListener {
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent_CheckPoint);
 
         //Set ServiceProbe calendar,(Disable this calendar, since the frequency is same with CheckPoint.(Do it together with CheckPoint)):
-//        Intent ServiceProbeIntent = new Intent(mContext, XmindReceiver.class);
-//        ServiceProbeIntent.setAction(SERVICE_PROBE);
-//        pendingIntent_ServiceProbe = PendingIntent.getBroadcast(mContext, 0, ServiceProbeIntent, 0);
-//        alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
-//        Calendar ServiceProbeCalendar = Calendar.getInstance();
-//        ServiceProbeCalendar.setTimeInMillis(System.currentTimeMillis());
-//        ServiceProbeCalendar.add(Calendar.SECOND, 60);
-//        long serviceProvefrequency = mContext.getResources().getInteger(R.integer.timer_service_prove_frequency) * 60 * 1000;//One minute.
-//        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, ServiceProbeCalendar.getTimeInMillis(), serviceProvefrequency, pendingIntent_ServiceProbe);
+        Intent ServiceProbeIntent = new Intent(mContext, XmindReceiver.class);
+        ServiceProbeIntent.setAction(SERVICE_PROBE);
+        pendingIntent_ServiceProbe = PendingIntent.getBroadcast(mContext, 0, ServiceProbeIntent, 0);
+        alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
+        Calendar ServiceProbeCalendar = Calendar.getInstance();
+        ServiceProbeCalendar.setTimeInMillis(System.currentTimeMillis());
+        ServiceProbeCalendar.add(Calendar.SECOND, 60);
+        long serviceProvefrequency = mContext.getResources().getInteger(R.integer.timer_service_prove_frequency) * 60 * 1000;//One minute.
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, ServiceProbeCalendar.getTimeInMillis(), serviceProvefrequency, pendingIntent_ServiceProbe);
 
         //Set uploading calendar:
         Intent UploadingIntent = new Intent(mContext, XmindReceiver.class);
@@ -636,7 +651,7 @@ public class XmindService extends Service implements Probe.DataListener {
                     al_fo.get(i).stopWatching();
                 }
                 al_fo.clear();
-                Log.i(TAG, "FileObserver is disabled, since we could get NEW_Picture action from XmindReceiver.");
+//                Log.i(TAG, "FileObserver is disabled, since we could get NEW_Picture action from XmindReceiver.");
             }
         }
     }

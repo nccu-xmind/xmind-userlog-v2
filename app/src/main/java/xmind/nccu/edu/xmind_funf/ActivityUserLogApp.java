@@ -39,7 +39,7 @@ public class ActivityUserLogApp extends Activity {
 
     private static final String TAG = ActivityUserLogApp.class.getSimpleName();
 
-    public static final boolean isEnableUI = true;
+    public static final boolean isEnableUI = false;
 
     private AQuery aq;
     private Context mContext;
