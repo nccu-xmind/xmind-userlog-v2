@@ -2,6 +2,7 @@
     package="xmind.nccu.edu.xmind_funf">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.BATTERY_STATS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -39,9 +40,11 @@
         <receiver
             android:name="xmind.nccu.edu.xmind_funf.Service.XmindReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.HOME" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="android.intent.action.SCREEN_ON" />
                 <action android:name="android.intent.action.ACTION_SCREEN_OFF" />
@@ -66,7 +69,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
 
                 <action android:name="android.intent.action.BATTERY_CHANGED" />
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.DOCK_EVENT" />
                 <action android:name="android.intent.action.ACTION_SCREEN_ON" />
                 <action android:name="android.intent.action.USER_PRESENT" />
@@ -80,7 +82,7 @@
         </service>
 
         <service
-            android:name=".Service.XmindService"
+            android:name="xmind.nccu.edu.xmind_funf.Service.XmindService"
             android:enabled="true">
             <intent-filter>
                 <action android:name="edu.nccu.xmind.notify" />
@@ -90,7 +92,7 @@
 
         <service
             android:label="@string/accessibility_service_name"
-            android:name=".Service.WindowChangeDetectingService"
+            android:name="xmind.nccu.edu.xmind_funf.Service.WindowChangeDetectingService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService"/>

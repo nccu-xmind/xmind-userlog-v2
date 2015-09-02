@@ -60,6 +60,7 @@ public class ActivityUserLogApp extends Activity {
         //Start service automatically as following code---------
         Intent intent_initService = new Intent(mContext, XmindService.class);
         intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
+//        intent_initService.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         mContext.startService(intent_initService);
         isServiceStart = true;
 

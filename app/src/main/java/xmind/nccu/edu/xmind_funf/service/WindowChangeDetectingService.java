@@ -3,6 +3,7 @@ package xmind.nccu.edu.xmind_funf.Service;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -28,6 +29,12 @@ public class WindowChangeDetectingService extends AccessibilityService {
         if (Build.VERSION.SDK_INT >= 16)
             //Just in case this helps
             config.flags = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
+
+
+        //Starting service from here...
+        Intent intent_initService = new Intent(this, XmindService.class);
+        intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
+        startService(intent_initService);
 
         setServiceInfo(config);
     }
