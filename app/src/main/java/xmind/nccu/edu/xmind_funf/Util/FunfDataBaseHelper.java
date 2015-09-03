@@ -22,8 +22,8 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
                     new NameValueDatabaseHelper.Column("timestamp", "TEXT"),//2
                     new NameValueDatabaseHelper.Column("batteryLevel", "FLOAT"),//3
                     new NameValueDatabaseHelper.Column("process", "TEXT"),//4
-                    new NameValueDatabaseHelper.Column("latitude", "FLOAT"),//5
-                    new NameValueDatabaseHelper.Column("longitude", "FLOAT"),//6
+                    new NameValueDatabaseHelper.Column("latitude", "TEXT"),//5
+                    new NameValueDatabaseHelper.Column("longitude", "TEXT"),//6
                     new NameValueDatabaseHelper.Column("rssi", "FLOAT"),//7
                     new NameValueDatabaseHelper.Column("isScreenOn", "TEXT"),//8
                     new NameValueDatabaseHelper.Column("packageName", "TEXT"),//9
@@ -107,8 +107,8 @@ public class FunfDataBaseHelper extends SQLiteOpenHelper {
         ContentValues cv = new ContentValues();
         cv.put("name", name);
         cv.put("timestamp", timestamp);
-        cv.put("latitude", Double.valueOf(mLatitude));
-        cv.put("longitude", Double.valueOf(mLongitude));
+        cv.put("latitude", mLatitude);
+        cv.put("longitude", mLongitude);
         long row = db.insert(XMIND_FUNF_DATABASE_NAME, null, cv);
         return row;
     }
