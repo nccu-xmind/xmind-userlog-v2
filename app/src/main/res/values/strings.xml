@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">xmind_funf</string>
+    <string name="app_name">XMind</string>
     <string name="default_pipeline">
         {"@type":"edu.mit.media.funf.pipeline.BasicPipeline",
         "name":"default",
@@ -21,7 +21,7 @@
     <string name="uploading_data">Please wait while loading,&#8230;</string>
 
     <string name="accessibility_service_description">Please turn on the service during the experiment&#8230;</string>
-    <string name="accessibility_service_name">Xmind funf UserLog</string>
+    <string name="accessibility_service_name">XMind</string>
 
     <string name="delete_N_rows">1000</string>
 
