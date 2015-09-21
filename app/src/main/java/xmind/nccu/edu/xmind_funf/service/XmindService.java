@@ -16,6 +16,7 @@ import android.net.NetworkInfo;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.FileObserver;
 import android.os.Handler;
@@ -31,6 +32,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 import edu.mit.media.funf.FunfManager;
 import edu.mit.media.funf.json.IJsonObject;
@@ -104,7 +106,7 @@ public class XmindService extends Service implements Probe.DataListener {
     private SharedPreferences funf_xmind_sp;
     private int callRecord = 0;
 
-    private boolean isAlreadyCallUploading = false;
+    private UploadingHelper mUploadingTask = null;
 
     /* *
      * Start from here if first time launch service.
@@ -256,17 +258,10 @@ public class XmindService extends Service implements Probe.DataListener {
                         removeAll();
                     else
                         deleteFirstNRows(String.valueOf(uploadFirstNrows));
-                } /*else if (result.equals(UploadingHelper.STATUS_CODE_001)) {
-//                    Log.v(TAG, "Automatically uploading failed, since no data.");
-//                    Toast.makeText(mContext, "No records currently.", Toast.LENGTH_SHORT).show();
-                } else {
-//                    Log.v(TAG, "Automatically uploading failed, since unknow reason.");
-//                    Toast.makeText(mContext, "Unknow status." + result, Toast.LENGTH_LONG).show();
-                }*/
+                }
             } catch (Exception e) {
 //                Toast.makeText(mContext, "[NOT JSON OBJECT] :" + result, Toast.LENGTH_LONG).show();
             }
-            isAlreadyCallUploading = false;
         }
     };
 
@@ -274,22 +269,24 @@ public class XmindService extends Service implements Probe.DataListener {
      * Upload user record by this method.
      * */
     private void uploadingRecords() {
-        if(!isAlreadyCallUploading){
-            isAlreadyCallUploading = true;
-            ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-            boolean is3gAvailable = false;
-            try {
-                is3gAvailable = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting();
-            } catch (Exception e) {
-            }//Device is tablet computer.
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        boolean is3gAvailable = false;
+        try {
+            is3gAvailable = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnectedOrConnecting();
+        } catch (Exception e) {
+        }//Device is tablet computer.
 
-            if (mWifi.isConnected() || is3gAvailable) {//Start uploading processing if Wifi or MobileData is available.
-                UploadingHelper task = new UploadingHelper(mContext);
-                task.setPostExecuteListener(PostListner_SendingDataTask);
-                task.execute("http://mobilesns.cs.nccu.edu.tw/xmind-backend/bupload.php");
-            } else
-                Log.w(TAG, "Wifi is disconnected currently.");
+        if (mWifi.isConnected() || is3gAvailable) {//Start uploading processing if Wifi or MobileData is available.
+            if (mUploadingTask == null || !(mUploadingTask.getStatus() == AsyncTask.Status.RUNNING)) {
+                mUploadingTask = new UploadingHelper(mContext);
+                mUploadingTask.setPostExecuteListener(PostListner_SendingDataTask);
+                try {
+                    mUploadingTask.execute("http://mobilesns.cs.nccu.edu.tw/xmind-backend/bupload.php").get(10000, TimeUnit.MILLISECONDS);
+                } catch (Exception e) {
+                    //Timeout
+                }
+            }
         }
     }
 
@@ -349,17 +346,14 @@ public class XmindService extends Service implements Probe.DataListener {
             int wifiTag = -1;
             if (supState.equals(SupplicantState.COMPLETED)) {
                 wifiTag = wifiManager.isWifiEnabled() ? 0 : 1;
+//                Log.v("ssku", "Wifi changed. " + wifiTag);
                 if (wifiTag == 0) {//0 == connected
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
                             uploadingRecords();
                         }
-                    }, 5000);//Start uploading data after 5 seconds if wifi connected.
-                }else{
-                    if(isAlreadyCallUploading){//change status if turn off wifi when uploading.
-                        isAlreadyCallUploading = false;
-                    }
+                    }, 20000);//Start uploading data after 5 seconds if wifi connected.
                 }
             } else if (supState.equals(SupplicantState.DISCONNECTED)) {
                 wifiTag = 2;
