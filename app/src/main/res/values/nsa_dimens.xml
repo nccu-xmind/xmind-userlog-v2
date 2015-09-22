@@ -23,4 +23,17 @@
     <integer name="timer_uploading_frequency">60</integer>
     <integer name="timer_calllog_frequency">120</integer>
 
+    <string-array name="photos_observer_lise">
+        <item>/storage/extSdCard/DCIM/100MEDIA</item>
+        <item>/storage/sdcard1/DCIM/100MEDIA</item>
+        <item>/storage/usbcard1/DCIM/100MEDIA</item>
+        <item>/storage/sdcard0/DCIM/100MEDIA</item>
+        <item>/storage/ext_sd/DCIM/100MEDIA</item>
+        <item>/storage/extSdCard/DCIM/Camera</item>
+        <item>/storage/sdcard1/DCIM/Camera</item>
+        <item>/storage/usbcard1/DCIM/Camera</item>
+        <item>/storage/sdcard0/DCIM/Camera</item>
+        <item>/storage/ext_sd/DCIM/Camera</item>
+    </string-array>
+
 </resources>

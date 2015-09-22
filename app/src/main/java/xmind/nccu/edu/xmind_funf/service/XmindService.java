@@ -100,6 +100,7 @@ public class XmindService extends Service implements Probe.DataListener {
     private PendingIntent pendingIntent_calllog;
 
     private ArrayList<FileObserver> al_fo = new ArrayList<>();
+    //    private String[]{"",""} test1;
     private final Handler handler = new Handler();
 
     //disable hardwareInfo probe if funf is already got it.
@@ -117,6 +118,8 @@ public class XmindService extends Service implements Probe.DataListener {
         isAlreadyRunning = false;//set it false if first time running this app.
         funf_xmind_sp = UserLogUtil.GetSharedPreferencesForTimeControl(this);//get SharedPreference here.
         callRecord = funf_xmind_sp.getInt(UserLogUtil.getCallLog, 0);//Check call history, get zero if it's first time.
+
+        bindService(new Intent(this, FunfManager.class), funfManagerConn, BIND_AUTO_CREATE);
     }
 
     /* *
@@ -193,11 +196,15 @@ public class XmindService extends Service implements Probe.DataListener {
         //Check the message from 'XmindReceiver' as following:
         if (intent != null && intent.getAction() != null) {
             if (!isAlreadyRunning || intent.getAction().equals(FIRST_TIME_START_SERVICE) || !(funfManager != null)) {
-//                Log.v(TAG, "Prepare to start service.");
                 isAlreadyRunning = true;
                 bindService(new Intent(this, FunfManager.class), funfManagerConn, BIND_AUTO_CREATE);
                 setServiceCalendar();
-                getBatteryStatus();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        getBatteryStatus();
+                    }
+                }, 5000);//Check battery status after 10 seconds(waiting for FunfManager has been launcehd.)
 
                 //Register GPS listener, wifi listener and enable them on first time.
                 IntentFilter filter = new IntentFilter(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
@@ -205,7 +212,9 @@ public class XmindService extends Service implements Probe.DataListener {
 
                 //Create FileObserver on first time, and check status on the following.
                 setFileObserverStatus();//Stop watching folder if 'isNewPictureByReceiver' is true, otherwise, start watching.
-            } else if (intent.getAction().equals(CHECK_POINT)) {
+            }
+
+            if (intent.getAction().equals(CHECK_POINT)) {
 //                Log.v(TAG, "Get action from checkpoint");
                 getBatteryStatus();
 //                getServiceStatus();
@@ -233,11 +242,10 @@ public class XmindService extends Service implements Probe.DataListener {
                     FDB_Helper.close();
                 }
                 isNewPictureByReceiver = true;
-                //Create FileObserver on first time, and check status on the following.
                 setFileObserverStatus();//Stop watching folder if 'isNewPictureByReceiver' is true, otherwise, start watching.
             }
         } else
-            Log.e(TAG, "Error, Start service with issue.");
+            Log.e(TAG, "Got a null intent, wouldn't start service.");
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -632,22 +640,23 @@ public class XmindService extends Service implements Probe.DataListener {
      * Enable or disable FileObserver depend on deveice
      * */
     private void setFileObserverStatus() {
-//        Log.v(TAG, "isNewPictureByReceiver : " + isNewPictureByReceiver + ", Size : " + al_fo.size());
         if (!isNewPictureByReceiver) {//FileObserver wouldn't active if we could get NEW_Picture action from XmindReceiver.
             if (al_fo.size() == 0) {
-//                Log.i(TAG, "FileObserver is Enabled.");
-//            String albumPath = "";
+                //=================for DEFAULT PATH of album=================
                 File f = new File(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA");
                 if (f.isDirectory())
-                    al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Came100MEDIAra"));
-                /*else
-                    Log.e(TAG, "100MEDIA NOT exist");*/
+                    al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA"));
 
                 File f2 = new File(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera");
                 if (f2.isDirectory())
                     al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"));
-                /*else
-                    Log.e(TAG, "Camera NOT exist");*/
+
+                //** FolderObserver for SD card **/
+                String[] sa = mContext.getResources().getStringArray(R.array.photos_observer_lise);
+                for (int i = 0; i < sa.length; i++) {
+                    if (new File(sa[i]).exists())
+                        al_fo.add(addFileObserver(sa[i]));
+                }
             }
         } else {
             if (al_fo.size() > 0) {
@@ -655,7 +664,6 @@ public class XmindService extends Service implements Probe.DataListener {
                     al_fo.get(i).stopWatching();
                 }
                 al_fo.clear();
-//                Log.i(TAG, "FileObserver is disabled, since we could get NEW_Picture action from XmindReceiver.");
             }
         }
     }

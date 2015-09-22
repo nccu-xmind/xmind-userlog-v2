@@ -199,8 +199,10 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
                 Log.d(TAG, e.getLocalizedMessage());
             }
             return result;
-        } else
+        } else {
+            dataCursor.close();
             return STATUS_CODE_001;
+        }
     }
 
     public void setPostExecuteListener(PostExecuteListener postExecuteListener) {
