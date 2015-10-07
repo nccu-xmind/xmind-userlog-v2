@@ -1,6 +1,7 @@
 package xmind.nccu.edu.xmind_funf.Util;
 
 import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -108,6 +109,7 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
                 HttpClient httpclient = new DefaultHttpClient();
                 HttpPost httpPost = new HttpPost(url);
                 String json = "";
+                PackageInfo pInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName() ,0);
 
                 JSONObject jsonData = new JSONObject();
                 jsonData.accumulate(UploadUtil.OBJ_MAIL, primaryEMail);
@@ -115,6 +117,8 @@ public class UploadingHelper extends AsyncTask<String, Void, String> {
                 jsonData.accumulate(UploadUtil.OBJ_DEVICE, deviceID);
                 jsonData.accumulate(UploadUtil.OBJ_ANDROIDVERSION, getAndroidVersion());
                 jsonData.accumulate(UploadUtil.OBJ_UPLOADING_TIME, UploadingTimestamp);
+                jsonData.accumulate(UploadUtil.OBJ_APP_VERSION, pInfo.versionName);
+
 
                 JSONArray jasonProbeArray = new JSONArray();
                 if (dataCursor.getCount() > 0) {

@@ -100,7 +100,6 @@ public class XmindService extends Service implements Probe.DataListener {
     private PendingIntent pendingIntent_calllog;
 
     private ArrayList<FileObserver> al_fo = new ArrayList<>();
-    //    private String[]{"",""} test1;
     private final Handler handler = new Handler();
 
     //disable hardwareInfo probe if funf is already got it.
@@ -261,7 +260,6 @@ public class XmindService extends Service implements Probe.DataListener {
                 JSONObject js = new JSONObject(result);
                 if (js.getString("state").toString().equals("true")) {
 //                    Log.v(TAG, "Automatically uploading data succeed.");
-//                    Toast.makeText(mContext, "Uploading data SUCCESS and clear database, total : " + js.getString("count").toString(), Toast.LENGTH_SHORT).show();
                     if (isDeleteAll)
                         removeAll();
                     else
@@ -642,7 +640,7 @@ public class XmindService extends Service implements Probe.DataListener {
     private void setFileObserverStatus() {
         if (!isNewPictureByReceiver) {//FileObserver wouldn't active if we could get NEW_Picture action from XmindReceiver.
             if (al_fo.size() == 0) {
-                //=================for DEFAULT PATH of album=================
+                /** Android default album path **/
                 File f = new File(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA");
                 if (f.isDirectory())
                     al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA"));
@@ -651,11 +649,12 @@ public class XmindService extends Service implements Probe.DataListener {
                 if (f2.isDirectory())
                     al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"));
 
-                //** FolderObserver for SD card **/
+                //** FolderObserver list for SD card or other devices **/
                 String[] sa = mContext.getResources().getStringArray(R.array.photos_observer_lise);
                 for (int i = 0; i < sa.length; i++) {
-                    if (new File(sa[i]).exists())
+                    if (new File(sa[i]).exists()){
                         al_fo.add(addFileObserver(sa[i]));
+                    }
                 }
             }
         } else {

@@ -24,6 +24,8 @@
     <integer name="timer_calllog_frequency">120</integer>
 
     <string-array name="photos_observer_lise">
+        <item>/sdcard/DCIM/100ANDRO/</item>
+        <item>/storage/sdcard1/DCIM/100ANDRO/</item>
         <item>/storage/extSdCard/DCIM/100MEDIA</item>
         <item>/storage/sdcard1/DCIM/100MEDIA</item>
         <item>/storage/usbcard1/DCIM/100MEDIA</item>
@@ -34,6 +36,19 @@
         <item>/storage/usbcard1/DCIM/Camera</item>
         <item>/storage/sdcard0/DCIM/Camera</item>
         <item>/storage/ext_sd/DCIM/Camera</item>
+        <item>/storage/ext_sd/DCIM/XPERIA/BURST</item>
+        <item>/storage/usbcard1/DCIM/XPERIA/BURST</item>
+        <item>/storage/extSdCard/DCIM/XPERIA/BURST</item>
+        <item>/storage/sdcard0/DCIM/XPERIA/BURST</item>
+        <item>/storage/sdcard1/DCIM/XPERIA/BURST</item>
+        <item>/sdcard/DCIM/XPERIA/BURST</item>
+        <item>/sdcard/DCIM/100ANDRO</item>
+        <item>/storage/ext_sd/DCIM/100ANDRO</item>
+        <item>/storage/usbcard1/DCIM/100ANDRO</item>
+        <item>/storage/extSdCard/DCIM/100ANDRO</item>
+        <item>/storage/sdcard0/DCIM/100ANDRO</item>
+        <item>/storage/sdcard1/DCIM/100ANDRO</item>
+        <item>/sdcard/DCIM/</item>
     </string-array>
 
 </resources>
