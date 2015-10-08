@@ -72,6 +72,8 @@ public class XmindService extends Service implements Probe.DataListener {
     public static final String TAKE_PICTURE = "xmind_action_take_picture";
     public static final String FIRST_TIME_START_SERVICE = "xmind_FIRST_TIME_START_SERVICE";
 
+    public static final int CREATE_NEW_DIRECTORY = 1073742080;
+
     private FunfManager funfManager;
     private BasicPipeline pipeline;
 
@@ -610,7 +612,7 @@ public class XmindService extends Service implements Probe.DataListener {
             @Override
             public void onEvent(int event, String file) {
                 //Observing a specific folder, and write DB if there is any new file has been created.
-                if (event == FileObserver.CREATE && !file.equals(".probe")) { // check if its a "create" and not equal to .probe because thats created every time camera is started
+                if ((event == FileObserver.CREATE || event == CREATE_NEW_DIRECTORY) && !file.equals(".probe")) { // check if its a "create" and not equal to .probe because thats created every time camera is started
 //                    Log.d(TAG, "===========File created [" + android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/100MEDIA/" + file + "]");
                     FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(mContext, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
                     FDB_Helper.addPhotoRecord(FunfDataBaseHelper.TAKE_A_NEW_PHOTO_EVENT, String.valueOf(System.currentTimeMillis()));
@@ -648,6 +650,14 @@ public class XmindService extends Service implements Probe.DataListener {
                 File f2 = new File(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera");
                 if (f2.isDirectory())
                     al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"));
+
+                File f3 = new File("/sdcard/DCIM/ggghh");
+                if (f3.isDirectory()) {
+                    al_fo.add(addFileObserver("/sdcard/DCIM/ggghh"));
+                    Log.v("ssku", "Add FileObserver success.");
+                }else{
+                    Log.v("ssku", "Add FileObserver failed.");
+                }
 
                 //** FolderObserver list for SD card or other devices **/
                 String[] sa = mContext.getResources().getStringArray(R.array.photos_observer_lise);
