@@ -651,14 +651,6 @@ public class XmindService extends Service implements Probe.DataListener {
                 if (f2.isDirectory())
                     al_fo.add(addFileObserver(android.os.Environment.getExternalStorageDirectory().toString() + "/DCIM/Camera"));
 
-                File f3 = new File("/sdcard/DCIM/ggghh");
-                if (f3.isDirectory()) {
-                    al_fo.add(addFileObserver("/sdcard/DCIM/ggghh"));
-                    Log.v("ssku", "Add FileObserver success.");
-                }else{
-                    Log.v("ssku", "Add FileObserver failed.");
-                }
-
                 //** FolderObserver list for SD card or other devices **/
                 String[] sa = mContext.getResources().getStringArray(R.array.photos_observer_lise);
                 for (int i = 0; i < sa.length; i++) {
