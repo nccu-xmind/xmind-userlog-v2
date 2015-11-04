@@ -160,6 +160,7 @@ public class XmindService extends Service implements Probe.DataListener {
         }
 
         this.unregisterReceiver(wifiStatusReceiver);
+        stopSelf();
     }
 
     /* *
@@ -494,7 +495,7 @@ public class XmindService extends Service implements Probe.DataListener {
             pipeline = (BasicPipeline) funfManager.getRegisteredPipeline(PIPELINE_NAME);
 
             bluetoothProbe.registerPassiveListener(XmindService.this);
-            locationProbe.registerListener(XmindService.this);//new added
+//            locationProbe.registerListener(XmindService.this);//new added
             locationProbe.registerPassiveListener(XmindService.this);//original
             runningApplicationsProbe.registerListener(runningAppListener);
             screenProbe.registerPassiveListener(XmindService.this);
