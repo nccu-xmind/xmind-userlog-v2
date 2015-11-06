@@ -30,8 +30,6 @@ public class WindowChangeDetectingService extends AccessibilityService {
             //Just in case this helps
             config.flags = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
 
-
-        //Starting service from here...
         Intent intent_initService = new Intent(this, XmindService.class);
         intent_initService.setAction(XmindService.FIRST_TIME_START_SERVICE);
         startService(intent_initService);
@@ -41,22 +39,25 @@ public class WindowChangeDetectingService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+        String mPackageName = "UnknowPackageName";
+        String mClassName = "UnknowClassName";
+        try {
+            mPackageName = event.getPackageName().toString();
+            mClassName = event.getClassName().toString();
+        } catch (Exception e) {
+        }
+
         if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            ComponentName componentName = new ComponentName(
-                    event.getPackageName().toString(),
-                    event.getClassName().toString()
-            );
+            ComponentName componentName = new ComponentName(mPackageName, mClassName);
 
             ActivityInfo activityInfo = tryGetActivity(componentName);
             boolean isActivity = activityInfo != null;
             if (isActivity) {//get activity change here.
                 if (!componentName.flattenToShortString().equals(previousActivity)) {
-//                    Log.i("ssku", componentName.flattenToShortString());
                     FunfDataBaseHelper FDB_Helper = new FunfDataBaseHelper(this, FunfDataBaseHelper.XMIND_FUNF_DATABASE_NAME);
                     FDB_Helper.addCurrentForegroundAppRecord(FunfDataBaseHelper.CURRENT_FOREGROUND_APP, String.valueOf(System.currentTimeMillis()), componentName.flattenToShortString());
                     FDB_Helper.close();
-                } /*else
-                    Log.v("ssku", "Same activity, wouldn't record it.");*/
+                }
                 previousActivity = componentName.flattenToShortString();
             }
         }
